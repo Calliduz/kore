@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
-import { FallbackProps } from "react-error-boundary";
+
+interface FallbackProps {
+  error: Error;
+  resetErrorBoundary: () => void;
+}
 
 export const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   return (

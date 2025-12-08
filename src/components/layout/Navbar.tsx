@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Search } from 'lucide-react';
+import { Menu, X, Search } from 'lucide-react';
 import { useState } from 'react';
 
 import { useCartStore } from '@/store/cartStore';
@@ -10,8 +10,7 @@ import { CartSheet } from '@/components/features/CartSheet';
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
-  const items = useCartStore((state: { items: any[] }) => state.items);
-  const cartItemCount = items.reduce((acc: number, item: { quantity: number }) => acc + item.quantity, 0); 
+  useCartStore((state: { items: any[] }) => state.items); // Keep cart subscription for reactivity 
 
   const navLinks = [
     { name: 'Shop', href: '/shop' },

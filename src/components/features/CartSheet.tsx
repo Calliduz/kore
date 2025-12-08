@@ -3,8 +3,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useCartStore } from "@/store/cartStore";
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { type Product } from "@/types";
+
+interface CartItem extends Product {
+  quantity: number;
+}
 
 export function CartSheet() {
   const { items, total, removeItem, addItem } = useCartStore();
@@ -43,11 +46,11 @@ export function CartSheet() {
             <>
                 <div className="flex-1 overflow-y-auto py-6 -mx-6 px-6">
                     <div className="space-y-6">
-                        {items.map((item) => (
-                            <div key={item.id} className="flex gap-4">
+                        {items.map((item: CartItem) => (
+                            <div key={item._id || item.id} className="flex gap-4">
                                 <div className="h-20 w-20 rounded-md overflow-hidden bg-muted shrink-0 border">
                                     <img 
-                                        src={item.image} 
+                                        src={item.images?.[0] || item.image || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&q=80&w=200'} 
                                         alt={item.name} 
                                         className="h-full w-full object-cover"
                                     />
@@ -60,7 +63,7 @@ export function CartSheet() {
                                     <div className="flex items-center justify-between text-muted-foreground">
                                         <div className="flex items-center gap-2 border rounded-md h-8">
                                             <button 
-                                                onClick={() => removeItem(item.id)}
+                                                onClick={() => removeItem(item._id || item.id || '')}
                                                 className="px-2 hover:bg-muted h-full transition-colors"
                                             >
                                                 <Minus className="h-3 w-3" />
@@ -74,7 +77,7 @@ export function CartSheet() {
                                             </button>
                                         </div>
                                         <button 
-                                            onClick={() => removeItem(item.id)}
+                                            onClick={() => removeItem(item._id || item.id || '')}
                                             className="text-muted-foreground hover:text-destructive transition-colors"
                                         >
                                             <Trash2 className="h-4 w-4" />

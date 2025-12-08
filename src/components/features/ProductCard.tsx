@@ -49,9 +49,9 @@ export default function ProductCard({ product, isLoading }: ProductCardProps) {
     >
         <div className="relative aspect-square overflow-hidden bg-muted">
              {/* Badges */}
-             {product.id && parseInt(product.id) % 2 === 0 && (
-                 <div className="absolute top-2 left-2 z-20 bg-background/90 backdrop-blur-sm px-2 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm rounded-sm">
-                     New Arrival
+             {product.stock && product.stock < 10 && (
+                 <div className="absolute top-2 left-2 z-20 bg-destructive text-destructive-foreground px-2 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm rounded-sm">
+                     Low Stock
                  </div>
              )}
              
@@ -61,9 +61,9 @@ export default function ProductCard({ product, isLoading }: ProductCardProps) {
                      <Skeleton height="100%" containerClassName="h-full w-full" className="h-full w-full" />
                 </div>
             )}
-            <Link to={`/product/${product.id}`} className="block h-full w-full cursor-pointer">
+            <Link to={`/product/${product._id || product.id}`} className="block h-full w-full cursor-pointer">
                 <img
-                src={product.image || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&q=80&w=800'}
+                src={product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&q=80&w=800'}
                 alt={product.name}
                 loading="lazy"
                 className={cn(

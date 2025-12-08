@@ -1,5 +1,3 @@
-import Hero from '@/components/features/Hero';
-
 export default function Collections() {
     return (
         <div className="space-y-12">
