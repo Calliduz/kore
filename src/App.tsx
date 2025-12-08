@@ -55,7 +55,21 @@ function App() {
                             } />
                         </Route>
                     </Routes>
-                    <Toaster position="top-right" />
+                    <Toaster 
+                      position="top-right"
+                      expand={true}
+                      richColors
+                      closeButton
+                      duration={4000}
+                      toastOptions={{
+                        style: {
+                          background: 'hsl(var(--color-card))',
+                          color: 'hsl(var(--color-card-foreground))',
+                          border: '1px solid hsl(var(--color-border))',
+                        },
+                        className: 'shadow-lg',
+                      }}
+                    />
                 </SkeletonTheme>
             </AuthProvider>
             </BrowserRouter>
