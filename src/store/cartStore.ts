@@ -84,13 +84,23 @@ export const useCartStore = create<CartState>()(
       // Format cart items for order creation API
       getOrderItems: () => {
         const items = get().items;
-        return items.map((item): OrderItem => ({
-          product: item._id || item.id || '',
-          name: item.name,
-          qty: item.quantity,
-          price: item.price,
-          image: item.images?.[0] || item.image || '',
-        }));
+        return items.map((item): OrderItem => {
+          // Ensure we have valid data for order creation
+          const productId = item._id || item.id;
+          const productImage = item.images?.[0] || item.image || 'https://via.placeholder.com/150';
+          
+          if (!productId) {
+            console.warn('Cart item missing product ID:', item);
+          }
+          
+          return {
+            product: productId || '',
+            name: item.name || 'Unknown Product',
+            qty: item.quantity || 1,
+            price: item.price || 0,
+            image: productImage,
+          };
+        }).filter(item => item.product); // Filter out items without product ID
       },
     }),
     {

@@ -13,6 +13,7 @@ import Checkout from '@/pages/Checkout';
 import ProductDetails from '@/pages/ProductDetails';
 import Collections from '@/pages/Collections';
 import About from '@/pages/About';
+import AdminDashboard from '@/pages/AdminDashboard';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { ThemeProvider } from "@/components/theme-provider"
 
@@ -45,6 +46,11 @@ function App() {
                             <Route path="account" element={
                                 <ProtectedRoute>
                                     <Account />
+                                </ProtectedRoute>
+                            } />
+                            <Route path="admin" element={
+                                <ProtectedRoute>
+                                    <AdminDashboard />
                                 </ProtectedRoute>
                             } />
                         </Route>

@@ -268,8 +268,8 @@ export default function Checkout() {
             </div>
 
             <div className="space-y-4">
-              {items.map((item) => (
-                <div key={item._id || item.id} className="flex gap-3">
+              {items.map((item, index) => (
+                <div key={item._id || item.id || `checkout-item-${index}`} className="flex gap-3">
                   <div className="h-16 w-16 rounded-md bg-muted overflow-hidden flex-shrink-0">
                     <img
                       src={item.images?.[0] || item.image || '/placeholder.jpg'}

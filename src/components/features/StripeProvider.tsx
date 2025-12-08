@@ -46,10 +46,10 @@ export default function StripeProvider({ children }: StripeProviderProps) {
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary: 'hsl(var(--color-primary))',
-            colorBackground: 'hsl(var(--color-background))',
-            colorText: 'hsl(var(--color-foreground))',
-            colorDanger: 'hsl(var(--color-destructive))',
+            colorPrimary: '#2563eb',
+            colorBackground: '#ffffff',
+            colorText: '#1f2937',
+            colorDanger: '#dc2626',
             borderRadius: '8px',
           },
         },

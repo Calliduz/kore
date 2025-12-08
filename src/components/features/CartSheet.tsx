@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCartStore } from "@/store/cartStore";
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -28,6 +28,7 @@ export function CartSheet() {
       <SheetContent className="w-full sm:max-w-lg flex flex-col h-full">
         <SheetHeader className="space-y-2.5 pr-6">
           <SheetTitle>Shopping Cart ({itemCount})</SheetTitle>
+          <SheetDescription>Review your items before checkout</SheetDescription>
         </SheetHeader>
         
         {items.length === 0 ? (
@@ -46,8 +47,8 @@ export function CartSheet() {
             <>
                 <div className="flex-1 overflow-y-auto py-6 -mx-6 px-6">
                     <div className="space-y-6">
-                        {items.map((item: CartItem) => (
-                            <div key={item._id || item.id} className="flex gap-4">
+                        {items.map((item: CartItem, index: number) => (
+                            <div key={item._id || item.id || `cart-item-${index}`} className="flex gap-4">
                                 <div className="h-20 w-20 rounded-md overflow-hidden bg-muted shrink-0 border">
                                     <img 
                                         src={item.images?.[0] || item.image || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&q=80&w=200'} 

@@ -61,6 +61,11 @@ export default function Navbar() {
                 <div className="absolute right-0 top-full mt-2 w-48 rounded-md border bg-popover p-1 shadow-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
                     <div className="px-2 py-1.5 text-sm font-semibold">{user.name}</div>
                     <div className="h-px bg-muted my-1" />
+                    {user.role === 'admin' && (
+                      <Link to="/admin" className="block px-2 py-1.5 text-sm hover:bg-muted rounded-sm text-primary font-medium">
+                        Admin Dashboard
+                      </Link>
+                    )}
                     <Link to="/account" className="block px-2 py-1.5 text-sm hover:bg-muted rounded-sm">My Account</Link>
                     <button 
                         onClick={() => logout()}
