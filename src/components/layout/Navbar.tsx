@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Search } from 'lucide-react';
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { useCartStore } from '@/store/cartStore';
 import { useAuth } from '@/hooks/useAuth';
@@ -125,57 +126,66 @@ export default function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-16 z-50 bg-background border-t p-4 overflow-y-auto animate-in slide-in-from-top-2">
-           <form 
-             onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.target as HTMLFormElement;
-                const input = form.elements.namedItem('mobile-search') as HTMLInputElement;
-                if (input.value) {
-                    navigate(`/shop?search=${encodeURIComponent(input.value)}`);
-                    setIsMenuOpen(false);
-                }
-             }}
-             className="mb-4"
-           >
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input 
-                        name="mobile-search"
-                        type="text" 
-                        placeholder="Search..." 
-                        className="w-full bg-muted rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                </div>
-           </form>
-          <nav className="flex flex-col gap-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                className="text-lg font-medium"
-                onClick={() => setIsMenuOpen(false)}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="md:hidden fixed inset-x-0 top-16 z-50 bg-background border-b shadow-lg overflow-hidden"
+          >
+             <div className="p-4 space-y-4">
+              <form 
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const input = form.elements.namedItem('mobile-search') as HTMLInputElement;
+                    if (input.value) {
+                        navigate(`/shop?search=${encodeURIComponent(input.value)}`);
+                        setIsMenuOpen(false);
+                    }
+                }}
               >
-                {link.name}
-              </Link>
-            ))}
-            <hr className="my-2 border-border" />
-            {user ? (
-              <>
-                 <Link to="/account" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium">My Account</Link>
-                 <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium">Wishlist</Link>
-                 <button onClick={logout} className="text-lg font-medium text-destructive text-left">Log Out</button>
-              </>
-            ) : (
-              <div className="flex flex-col gap-4 mt-2">
-                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium">Log in</Link>
-                <Link to="/register" onClick={() => setIsMenuOpen(false)} className="bg-primary text-primary-foreground px-4 py-3 rounded-full text-center font-medium">Sign up</Link>
-              </div>
-            )}
-          </nav>
-        </div>
-      )}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <input 
+                            name="mobile-search"
+                            type="text" 
+                            placeholder="Search..." 
+                            className="w-full bg-muted rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                    </div>
+              </form>
+              <nav className="flex flex-col gap-2">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.href}
+                    className="text-lg font-medium py-2 border-b border-border/50 last:border-0 hover:text-primary transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+                
+                {user ? (
+                  <div className="pt-2 flex flex-col gap-2">
+                     <Link to="/account" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium py-2 hover:text-primary transition-colors">My Account</Link>
+                     <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium py-2 hover:text-primary transition-colors">Wishlist</Link>
+                     <button onClick={logout} className="text-lg font-medium text-destructive text-left py-2">Log Out</button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3 mt-4">
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium text-center py-2">Log in</Link>
+                    <Link to="/register" onClick={() => setIsMenuOpen(false)} className="bg-primary text-primary-foreground px-4 py-3 rounded-xl text-center font-medium shadow-sm active:scale-95 transition-transform">Sign up</Link>
+                  </div>
+                )}
+              </nav>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

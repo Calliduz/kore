@@ -1,10 +1,31 @@
 # Backend Sync Prompt
 
-This document outlines the **new** backend changes required to support the recent frontend enhancements. Please assume standard REST API conventions.
+This document outlines the **required** backend changes to support the latest frontend features: **Advanced Search & Filtering**, **Wishlist**, and **Newsletter**.
 
-## 1. Wishlist Functionality
+Please implement the following updates in your backend.
 
-The frontend currently uses local storage for the wishlist. To enable cross-device synchronization, please implement:
+## 1. Advanced Product Search & Filtering
+
+To support the new `Shop` page with filters:
+
+### Endpoints
+- **GET** `/api/products` (Enhance functionality)
+  - **New Query Parameters**:
+    - `search`: String. Perform a case-insensitive, fuzzy search on `name` and `description`.
+    - `category`: String or Array of Strings. Filter products by category.
+    - `sort`: String. Options:
+      - `newest`: Sort by `createdAt` (desc).
+      - `price_asc`: Sort by `price` (asc).
+      - `price_desc`: Sort by `price` (desc).
+      - `name_asc`: Sort by `name` (asc).
+      - `minPrice` & `maxPrice`: Numbers. Filter by price range.
+  - **Response**: Standard paginated product list.
+
+---
+
+## 2. Wishlist Functionality
+
+The frontend has a fully functional UI for the Wishlist. We need to persist this data.
 
 ### Data Model
 - **Wishlist Schema**:
@@ -14,37 +35,29 @@ The frontend currently uses local storage for the wishlist. To enable cross-devi
 
 ### Endpoints
 - **GET** `/api/wishlist`
-  - **Auth**: Required (Middleware should reject unauthenticated requests)
-  - **Response**: List of Product objects in the user's wishlist (populated).
+  - **Auth**: Required.
+  - **Response**: List of populated Product objects in the user's wishlist.
 - **POST** `/api/wishlist/:productId`
-  - **Auth**: Required
-  - **Action**: Add product to wishlist. Returns updated wishlist.
+  - **Auth**: Required.
+  - **Action**: Add product to user's wishlist if not already present.
 - **DELETE** `/api/wishlist/:productId`
-  - **Auth**: Required
-  - **Action**: Remove product from wishlist. Returns updated wishlist.
+  - **Auth**: Required.
+  - **Action**: Remove product from user's wishlist.
 
-## 2. Advanced Search & Filtering
-
-To support the search bar and improved collection filtering:
-
-### Endpoints
-- **GET** `/api/products` (Enhancement)
-  - **Query Params**:
-    - `search`: String (Search by name or description, case-insensitive, fuzzy matching if possible)
-    - `category`: String (Filter by category)
-    - `sort`: String (e.g., 'price_asc', 'price_desc', 'newest')
-  - **Response**: Paginated list of products.
+---
 
 ## 3. Newsletter Subscription
 
-To support the new Newsletter component on the home page:
-
-### Data Model
-- **Subscriber Schema**:
-  - `email`: String (Unique, Required)
-  - `subscribedAt`: Date
+For the "Stay Connected" section on the homepage.
 
 ### Endpoints
 - **POST** `/api/newsletter/subscribe`
   - **Body**: `{ email: string }`
-  - **Action**: Save email to database. Handle duplicates gracefully (return success if already subscribed).
+  - **Action**: Save the email. Ensure uniqueness.
+  - **Response**: Success message.
+
+---
+
+## 4. General Notes
+- Ensure all endpoints use standard HTTP status codes (200, 201, 400, 401, 404, 500).
+- Cors should be configured to allow requests from the frontend origin.

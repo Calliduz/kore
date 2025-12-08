@@ -5,6 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/hooks/useAuth';
 import Home from '@/pages/Home';
+import Shop from '@/pages/Shop';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import Cart from '@/pages/Cart';
@@ -31,7 +32,7 @@ function App() {
                     <Routes>
                         <Route path="/" element={<Layout />}>
                             <Route index element={<Home />} />
-                            <Route path="shop" element={<Home />} />
+                            <Route path="shop" element={<Shop />} />
                             <Route path="collections" element={<Collections />} />
                             <Route path="wishlist" element={
                                 <ProtectedRoute>
