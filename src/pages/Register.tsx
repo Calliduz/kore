@@ -53,9 +53,9 @@ export default function Register() {
         password: data.password,
       });
       toast.success('Account created!', {
-        description: 'Welcome to KORE. Start exploring our collection.',
+        description: 'Please sign in to your new account.',
       });
-      navigate('/');
+      navigate('/login');
     } catch (err: any) {
       toast.error('Registration failed', {
         description: err.message || 'Something went wrong. Please try again.',

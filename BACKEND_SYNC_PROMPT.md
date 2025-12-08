@@ -14,7 +14,7 @@ The frontend currently uses local storage for the wishlist. To enable cross-devi
 
 ### Endpoints
 - **GET** `/api/wishlist`
-  - **Auth**: Required
+  - **Auth**: Required (Middleware should reject unauthenticated requests)
   - **Response**: List of Product objects in the user's wishlist (populated).
 - **POST** `/api/wishlist/:productId`
   - **Auth**: Required

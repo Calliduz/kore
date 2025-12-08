@@ -1,10 +1,11 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { type ApiResponse, type Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlistStore } from '@/store/wishlistStore';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import Skeleton from 'react-loading-skeleton';
 import { ShoppingCart, Package, Truck, Shield, Share2, Heart } from 'lucide-react';
@@ -23,6 +24,8 @@ export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
   const addItem = useCartStore((state) => state.addItem);
   const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedImage, setSelectedImage] = useState(0);
 
   const { data, isLoading, error } = useQuery({
@@ -91,6 +94,12 @@ export default function ProductDetails() {
   };
 
   const handleWishlistToggle = () => {
+    if (!user) {
+        toast.error('Please sign in to modify your wishlist');
+        navigate('/login');
+        return;
+    }
+
     const productId = data._id || data.id || '';
     if (!productId) return;
     
@@ -150,6 +159,7 @@ export default function ProductDetails() {
                     Low Stock: {data.stock} left
                 </div>
             )}
+            {/* Mobile Wishlist Button */}
             <button 
                 onClick={handleWishlistToggle}
                 className="absolute top-4 right-4 p-3 rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-all hover:scale-110 md:hidden"

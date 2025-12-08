@@ -33,7 +33,11 @@ function App() {
                             <Route index element={<Home />} />
                             <Route path="shop" element={<Home />} />
                             <Route path="collections" element={<Collections />} />
-                            <Route path="wishlist" element={<Wishlist />} />
+                            <Route path="wishlist" element={
+                                <ProtectedRoute>
+                                    <Wishlist />
+                                </ProtectedRoute>
+                            } />
                             <Route path="about" element={<About />} />
                             <Route path="product/:id" element={<ProductDetails />} />
                             <Route path="cart" element={<Cart />} />
@@ -65,14 +69,8 @@ function App() {
                       richColors
                       closeButton
                       duration={4000}
-                      toastOptions={{
-                        style: {
-                          background: 'hsl(var(--color-card))',
-                          color: 'hsl(var(--color-card-foreground))',
-                          border: '1px solid hsl(var(--color-border))',
-                        },
-                        className: 'shadow-lg',
-                      }}
+                      theme="system"
+                      className="toaster-group"
                     />
                 </SkeletonTheme>
             </AuthProvider>
