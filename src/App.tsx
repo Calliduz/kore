@@ -12,6 +12,7 @@ import Account from '@/pages/Account';
 import Checkout from '@/pages/Checkout';
 import ProductDetails from '@/pages/ProductDetails';
 import Collections from '@/pages/Collections';
+import Wishlist from '@/pages/Wishlist';
 import About from '@/pages/About';
 import NotFound from '@/pages/NotFound';
 import AdminDashboard from '@/pages/AdminDashboard';
@@ -32,6 +33,7 @@ function App() {
                             <Route index element={<Home />} />
                             <Route path="shop" element={<Home />} />
                             <Route path="collections" element={<Collections />} />
+                            <Route path="wishlist" element={<Wishlist />} />
                             <Route path="about" element={<About />} />
                             <Route path="product/:id" element={<ProductDetails />} />
                             <Route path="cart" element={<Cart />} />

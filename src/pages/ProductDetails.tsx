@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { type ApiResponse, type Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cartStore';
+import { useWishlistStore } from '@/store/wishlistStore';
 import { toast } from 'sonner';
 import Skeleton from 'react-loading-skeleton';
 import { ShoppingCart, Package, Truck, Shield, Share2, Heart } from 'lucide-react';
@@ -21,6 +22,7 @@ import { Accordion, AccordionItem } from "@/components/ui/accordion";
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
   const addItem = useCartStore((state) => state.addItem);
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore();
   const [selectedImage, setSelectedImage] = useState(0);
 
   const { data, isLoading, error } = useQuery({
@@ -33,7 +35,7 @@ export default function ProductDetails() {
 
   if (isLoading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 container py-8">
          <Skeleton width={300} height={20} />
          <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-4">
@@ -58,7 +60,7 @@ export default function ProductDetails() {
 
   if (error || !data) {
     return (
-      <div className="text-center py-24">
+      <div className="text-center py-24 container">
         <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-50" />
         <h2 className="text-3xl font-bold mb-2">Product not found</h2>
         <p className="text-muted-foreground mb-8 text-lg">
@@ -88,8 +90,31 @@ export default function ProductDetails() {
       );
   };
 
+  const handleWishlistToggle = () => {
+    const productId = data._id || data.id || '';
+    if (!productId) return;
+    
+    if (isInWishlist(productId)) {
+        removeFromWishlist(productId);
+        toast.info(
+            <div className="flex items-center gap-2">
+                <Heart className="h-4 w-4" />
+                <span>Removed from wishlist</span>
+            </div>
+        );
+    } else {
+        addToWishlist(data);
+        toast.success(
+            <div className="flex items-center gap-2">
+                <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                <span>Added to wishlist</span>
+            </div>
+        );
+    }
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="container py-8 space-y-8 animate-in fade-in duration-500">
       {/* Breadcrumb */}
       <Breadcrumb>
         <BreadcrumbList>
@@ -125,6 +150,12 @@ export default function ProductDetails() {
                     Low Stock: {data.stock} left
                 </div>
             )}
+            <button 
+                onClick={handleWishlistToggle}
+                className="absolute top-4 right-4 p-3 rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-all hover:scale-110 md:hidden"
+            >
+                <Heart className={`h-5 w-5 ${isInWishlist(data._id || data.id || '') ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
+            </button>
           </div>
           {images.length > 1 && (
             <div className="grid grid-cols-4 gap-4">
@@ -179,8 +210,13 @@ export default function ProductDetails() {
               <ShoppingCart className="h-5 w-5" />
               {data.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
-            <Button size="lg" variant="outline" className="px-6 py-7">
-               <Heart className="h-5 w-5" />
+            <Button 
+                size="lg" 
+                variant="outline" 
+                className={`px-6 py-7 hidden md:flex ${isInWishlist(data._id || data.id || '') ? 'border-red-200 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/30' : ''}`}
+                onClick={handleWishlistToggle}
+            >
+               <Heart className={`h-5 w-5 ${isInWishlist(data._id || data.id || '') ? 'fill-red-500 text-red-500' : ''}`} />
             </Button>
             <Button size="lg" variant="outline" className="px-6 py-7">
                <Share2 className="h-5 w-5" />

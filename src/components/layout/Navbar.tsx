@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Search } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,6 +11,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   useCartStore((state: { items: any[] }) => state.items); 
 
   const navLinks = [
@@ -18,6 +19,16 @@ export default function Navbar() {
     { name: 'Collections', href: '/collections' },
     { name: 'About', href: '/about' },
   ];
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const query = e.currentTarget.value.trim();
+      if (query) {
+        navigate(`/shop?search=${encodeURIComponent(query)}`);
+        setIsSearchOpen(false);
+      }
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-md shadow-sm transition-all">
@@ -55,95 +66,114 @@ export default function Navbar() {
                     onBlur={(e) => {
                         if (!e.target.value) setIsSearchOpen(false);
                     }}
+                    onKeyDown={handleSearch}
                  />
             </div>
-
+            
             <button 
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                 className="text-foreground/60 hover:text-foreground transition-colors"
             >
-                {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+                <Search className="h-5 w-5" />
                 <span className="sr-only">Search</span>
             </button>
 
-            <ModeToggle />
-            
             <CartSheet />
             
+            <ModeToggle />
+
             {user ? (
-              <div className="relative group">
-                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium border-2 border-background ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
-                        {user.name?.[0].toUpperCase() || 'U'}
-                    </div>
+              <div className="relative group hidden md:block">
+                <button className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors">
+                  {user.email}
                 </button>
-                {/* Dropdown */}
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border bg-popover p-1 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right scale-95 group-hover:scale-100 duration-200">
-                    <div className="px-3 py-2 text-sm">
-                        <p className="font-semibold">{user.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <div className="absolute right-0 top-full pt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform origin-top-right z-50">
+                    <div className="bg-popover border rounded-md shadow-md p-1 flex flex-col">
+                        <Link to="/account" className="px-3 py-2 text-sm hover:bg-muted rounded-sm text-left">My Account</Link>
+                        <Link to="/wishlist" className="px-3 py-2 text-sm hover:bg-muted rounded-sm text-left">Wishlist</Link>
+                        <button 
+                            onClick={logout}
+                            className="px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-sm text-left"
+                        >
+                            Log Out
+                        </button>
                     </div>
-                    <div className="h-px bg-muted my-1" />
-                    {user.role === 'admin' && (
-                      <Link to="/admin" className="block px-2 py-2 text-sm hover:bg-muted rounded-md text-primary font-medium transition-colors">
-                        Admin Dashboard
-                      </Link>
-                    )}
-                    <Link to="/account" className="block px-2 py-2 text-sm hover:bg-muted rounded-md transition-colors">My Account</Link>
-                    <button 
-                        onClick={() => logout()}
-                        className="w-full text-left px-2 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors"
-                    >
-                        Sign Out
-                    </button>
                 </div>
               </div>
             ) : (
-                <Link to="/login" className="text-foreground/60 hover:text-foreground transition-colors hidden sm:block">
-                    <div className="h-9 px-4 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground flex items-center justify-center text-sm font-medium transition-colors">
-                        Sign In
-                    </div>
+              <div className="hidden md:flex items-center gap-4">
+                <Link to="/login" className="text-sm font-medium hover:text-primary transition-colors">
+                  Log in
                 </Link>
+                <Link
+                  to="/register"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-full text-sm font-medium transition-colors"
+                >
+                  Sign up
+                </Link>
+              </div>
             )}
-            
-            <button title="mobile-menu"
-                className="md:hidden text-foreground/60 hover:text-foreground"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+
+            {/* Mobile Menu Toggle */}
+            <button
+              className="md:hidden p-2 -mr-2"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
         </div>
       </div>
 
-        {/* Mobile Menu */}
+      {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden border-t">
-          <div className="container py-4 flex flex-col gap-4">
-             {/* Mobile Search */}
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input 
-                    type="text" 
-                    placeholder="Search..." 
-                    className="w-full bg-muted border-none rounded-md pl-9 pr-4 py-2 text-sm"
-                />
-            </div>
+        <div className="md:hidden border-t p-4 bg-background absolute w-full left-0 animate-in slide-in-from-top-2">
+           <form 
+             onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const input = form.elements.namedItem('mobile-search') as HTMLInputElement;
+                if (input.value) {
+                    navigate(`/shop?search=${encodeURIComponent(input.value)}`);
+                    setIsMenuOpen(false);
+                }
+             }}
+             className="mb-4"
+           >
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input 
+                        name="mobile-search"
+                        type="text" 
+                        placeholder="Search..." 
+                        className="w-full bg-muted rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                </div>
+           </form>
+          <nav className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-sm font-medium text-foreground/60 hover:text-foreground py-2 border-b border-muted/50 last:border-0"
+                className="text-lg font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.name}
               </Link>
             ))}
-             {!user && (
-                 <Link to="/login" className="text-sm font-medium text-primary py-2" onClick={() => setIsMenuOpen(false)}>
-                     Sign In
-                 </Link>
-             )}
-          </div>
+            <hr className="my-2 border-border" />
+            {user ? (
+              <>
+                 <Link to="/account" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium">My Account</Link>
+                 <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium">Wishlist</Link>
+                 <button onClick={logout} className="text-lg font-medium text-destructive text-left">Log Out</button>
+              </>
+            ) : (
+              <div className="flex flex-col gap-4 mt-2">
+                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-lg font-medium">Log in</Link>
+                <Link to="/register" onClick={() => setIsMenuOpen(false)} className="bg-primary text-primary-foreground px-4 py-3 rounded-full text-center font-medium">Sign up</Link>
+              </div>
+            )}
+          </nav>
         </div>
       )}
     </header>
