@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { type Product, type ApiResponse } from '@/types';
+import { type ApiResponse, type ProductsResponse } from '@/types';
 import ProductCard from '@/components/features/ProductCard';
 import Skeleton from 'react-loading-skeleton';
 
@@ -94,9 +94,11 @@ export default function Shop() {
       selectedCategories.forEach(c => params.append('category', c));
       params.append('sort', sortBy);
       
-      // REAL API CALL
-      const { data } = await api.get<ApiResponse<Product[]>>(`/products?${params.toString()}`);
-      return data.data || [];
+      // API returns ApiResponse<ProductsResponse> where ProductsResponse has { data: Product[], pagination: {...} }
+      const { data } = await api.get<ApiResponse<ProductsResponse>>(`/products?${params.toString()}`);
+      
+      // Handle nested structure: ApiResponse.data = ProductsResponse, ProductsResponse.data = Product[]
+      return data.data?.data || [];
     },
   });
 

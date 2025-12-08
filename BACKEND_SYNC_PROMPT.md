@@ -1,10 +1,12 @@
 # Backend Sync Prompt
 
-This document outlines the **required** backend changes to support the latest frontend features.
+This document outlines the **current** backend API contract that the frontend expects.
 
-## 1. Products API (Search & Filter)
+---
 
-The frontend `Shop` page relies on the following query parameters for the `GET /api/products` endpoint.
+## ✅ Products API (Search & Filter) - IMPLEMENTED
+
+The frontend `Shop` page has been updated to handle the nested `ApiResponse` structure.
 
 **GET /api/products Query Params:**
 | Param | Type | Description |
@@ -17,27 +19,49 @@ The frontend `Shop` page relies on the following query parameters for the `GET /
 | `cursor` | string | Pagination cursor |
 | `limit` | number | Items per page (default: 20) |
 
-**Response Format:**
-The API should return a standard paginated response. The frontend currently expects:
+**Actual Response Format (Backend):**
 ```json
 {
-  "data": [ ...product objects... ],
-  "pagination": { ... } // Optional/If applicable
+  "success": true,
+  "statusCode": 200,
+  "message": "Products retrieved successfully",
+  "data": {
+    "data": [ ...product objects... ],
+    "pagination": {
+      "hasMore": true,
+      "nextCursor": "...",
+      "limit": 20
+    }
+  }
 }
 ```
-*Note: If the structure differs, please update the frontend expectation.*
 
-## 2. Wishlist Functionality
+**Frontend Handling:** The frontend now correctly accesses `response.data.data.data` for products and `response.data.data.pagination` for pagination info.
 
-- **GET** `/api/wishlist` (Auth Required): Return user's wishlist (populated products).
-- **POST** `/api/wishlist/:productId` (Auth Required): Add to wishlist.
-- **DELETE** `/api/wishlist/:productId` (Auth Required): Remove from wishlist.
+---
 
-## 3. Newsletter Subscription
+## ✅ Wishlist Functionality - IMPLEMENTED
+
+- **GET** `/api/wishlist` (Auth Required): Returns user's wishlist with populated products.
+- **POST** `/api/wishlist/:productId` (Auth Required): Adds product to wishlist.
+- **DELETE** `/api/wishlist/:productId` (Auth Required): Removes product from wishlist.
+
+---
+
+## ✅ Newsletter Subscription - IMPLEMENTED
 
 - **POST** `/api/newsletter/subscribe`: Body `{ email: string }`.
+  - Handles duplicate emails gracefully.
 
-## 4. Auth & User
+---
 
-- **GET** `/api/auth/me` (Auth Required): Should return the current user's profile.
-- Return `401 Unauthorized` if no valid token is present.
+## ✅ Auth & User - IMPLEMENTED
+
+- **GET** `/api/auth/me` (Auth Required): Returns the current user's profile.
+- Returns `401 Unauthorized` if no valid token is present.
+
+---
+
+## Summary
+
+All required backend endpoints are implemented and the frontend has been updated to handle the nested `ApiResponse` wrapper structure properly.
