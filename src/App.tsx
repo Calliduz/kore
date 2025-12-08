@@ -64,13 +64,26 @@ function App() {
                         </Route>
                     </Routes>
                     <Toaster 
-                      position="top-right"
-                      expand={true}
-                      richColors
+                      position="bottom-right"
+                      expand={false}
                       closeButton
-                      duration={4000}
+                      duration={5000}
                       theme="system"
-                      className="toaster-group"
+                      className="toaster-group font-sans"
+                      toastOptions={{
+                        classNames: {
+                          toast: "group toast group-[.toaster]:bg-card group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-border/50 group-[.toaster]:shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:group-[.toaster]:shadow-[0_8px_30px_rgb(0,0,0,0.5)] group-[.toaster]:rounded-none group-[.toaster]:items-start group-[.toaster]:p-5 group-[.toaster]:border-l-[4px] group-[.toaster]:data-[type=success]:border-l-[hsl(142,76%,36%)] group-[.toaster]:data-[type=error]:border-l-destructive group-[.toaster]:data-[type=info]:border-l-primary group-[.toaster]:data-[type=warning]:border-l-orange-500 transition-all duration-300 hover:translate-x-[-4px]",
+                          title: "group-[.toast]:font-bold group-[.toast]:text-sm group-[.toast]:uppercase group-[.toast]:tracking-wider group-[.toast]:text-foreground/90",
+                          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-xs group-[.toast]:mt-1.5 group-[.toast]:leading-relaxed group-[.toast]:font-medium",
+                          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:rounded-none group-[.toast]:px-4 group-[.toast]:py-2 group-[.toast]:text-xs group-[.toast]:font-bold group-[.toast]:uppercase group-[.toast]:tracking-wide",
+                          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:rounded-none",
+                          closeButton: "group-[.toast]:!bg-background group-[.toast]:!border-border/50 group-[.toast]:!text-muted-foreground group-[.toast]:hover:!bg-foreground group-[.toast]:hover:!text-background group-[.toast]:hover:!border-foreground group-[.toast]:transition-all group-[.toast]:duration-200 group-[.toast]:rounded-none group-[.toast]:!top-4 group-[.toast]:!right-4 group-[.toast]:w-6 group-[.toast]:h-6 group-[.toast]:opacity-0 group-hover:group-[.toast]:opacity-100",
+                          error: "group-[.toast]:text-destructive",
+                          success: "group-[.toast]:text-[hsl(142,76%,36%)]",
+                          warning: "group-[.toast]:text-orange-500",
+                          info: "group-[.toast]:text-primary",
+                        }
+                      }}
                     />
                 </SkeletonTheme>
             </AuthProvider>

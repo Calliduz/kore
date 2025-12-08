@@ -126,7 +126,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden border-t p-4 bg-background absolute w-full left-0 animate-in slide-in-from-top-2">
+        <div className="md:hidden fixed inset-0 top-16 z-50 bg-background border-t p-4 overflow-y-auto animate-in slide-in-from-top-2">
            <form 
              onSubmit={(e) => {
                 e.preventDefault();

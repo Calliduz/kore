@@ -159,21 +159,23 @@ export default function ProductDetails() {
                     Low Stock: {data.stock} left
                 </div>
             )}
-            {/* Mobile Wishlist Button */}
-            <button 
+            {/* Mobile Wishlist Button (Floating) */}
+             <button 
                 onClick={handleWishlistToggle}
-                className="absolute top-4 right-4 p-3 rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-all hover:scale-110 md:hidden"
+                className="absolute top-4 right-4 p-3 rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-all hover:scale-110 md:hidden z-10"
             >
                 <Heart className={`h-5 w-5 ${isInWishlist(data._id || data.id || '') ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
             </button>
           </div>
+          
+          {/* Thumbnails - Horizontal Scroll on Mobile */}
           {images.length > 1 && (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="flex overflow-x-auto pb-2 gap-4 snap-x md:grid md:grid-cols-4 md:overflow-visible">
               {images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                  className={`flex-none w-20 h-20 aspect-square rounded-xl overflow-hidden border-2 transition-all snap-start ${
                     selectedImage === index
                       ? 'border-primary ring-2 ring-primary/20 ring-offset-2'
                       : 'border-transparent hover:border-border'
@@ -191,12 +193,12 @@ export default function ProductDetails() {
         </div>
 
         {/* Product Info Side */}
-        <div className="flex flex-col">
+        <div className="flex flex-col pb-24 md:pb-0">
            <div className="mb-6">
                 <span className="text-sm font-semibold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full">
                 {data.category}
                 </span>
-                 <h1 className="text-4xl md:text-5xl font-bold mt-4 font-heading leading-tight">{data.name}</h1>
+                 <h1 className="text-3xl md:text-5xl font-bold mt-4 font-heading leading-tight">{data.name}</h1>
                 <div className="flex items-baseline gap-4 mt-6">
                     <p className="text-3xl font-bold text-foreground">
                         ${data.price.toFixed(2)}
@@ -209,8 +211,8 @@ export default function ProductDetails() {
                 </div>
            </div>
 
-            {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            {/* Desktop Actions */}
+          <div className="hidden md:flex flex-col sm:flex-row gap-4 mb-8">
             <Button
               size="lg"
               className="flex-1 py-7 text-lg gap-2 shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
@@ -223,12 +225,30 @@ export default function ProductDetails() {
             <Button 
                 size="lg" 
                 variant="outline" 
-                className={`px-6 py-7 hidden md:flex ${isInWishlist(data._id || data.id || '') ? 'border-red-200 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/30' : ''}`}
+                className={`px-6 py-7 ${isInWishlist(data._id || data.id || '') ? 'border-red-200 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/30' : ''}`}
                 onClick={handleWishlistToggle}
             >
                <Heart className={`h-5 w-5 ${isInWishlist(data._id || data.id || '') ? 'fill-red-500 text-red-500' : ''}`} />
             </Button>
             <Button size="lg" variant="outline" className="px-6 py-7">
+               <Share2 className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          {/* Mobile Sticky Action Bar */}
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t z-50 md:hidden flex gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+             <Button
+              size="lg"
+              className="flex-1 shadow-md"
+              onClick={handleAddToCart}
+              disabled={data.stock === 0}
+            >
+              <ShoppingCart className="h-5 w-5 mr-2" />
+              {data.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+            </Button>
+            <Button size="lg" variant="outline" className="px-4" onClick={() => {
+                 /* Share logic or just visuals */
+            }}>
                <Share2 className="h-5 w-5" />
             </Button>
           </div>
