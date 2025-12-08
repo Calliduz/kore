@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, ShoppingBag } from 'lucide-react';
@@ -18,7 +18,10 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
+  
+  const from = location.state?.from?.pathname || '/';
   
   const {
     register,
@@ -34,7 +37,7 @@ export default function Login() {
       toast.success('Welcome back!', {
         description: 'You have been signed in successfully.',
       });
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err: any) {
       toast.error('Sign in failed', {
         description: err.message || 'Invalid email or password. Please try again.',

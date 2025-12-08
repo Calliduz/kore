@@ -13,6 +13,7 @@ import Checkout from '@/pages/Checkout';
 import ProductDetails from '@/pages/ProductDetails';
 import Collections from '@/pages/Collections';
 import About from '@/pages/About';
+import NotFound from '@/pages/NotFound';
 import AdminDashboard from '@/pages/AdminDashboard';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import { ThemeProvider } from "@/components/theme-provider"
@@ -53,6 +54,7 @@ function App() {
                                     <AdminDashboard />
                                 </ProtectedRoute>
                             } />
+                            <Route path="*" element={<NotFound />} />
                         </Route>
                     </Routes>
                     <Toaster 

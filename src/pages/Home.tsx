@@ -1,5 +1,6 @@
 import ProductCard from '@/components/features/ProductCard';
 import Hero from '@/components/features/Hero';
+import Newsletter from '@/components/features/Newsletter';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { type ApiResponse, type Product, type ProductsResponse } from '@/types';
@@ -84,6 +85,8 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      <Newsletter />
     </div>
   );
 }

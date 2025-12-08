@@ -10,6 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/api';
 import { type ApiResponse, type AuthResponse } from '@/types';
+import Skeleton from 'react-loading-skeleton';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -189,8 +190,22 @@ export default function Account() {
             </div>
 
             {ordersLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
+                    <div className="flex justify-between">
+                      <div className="space-y-2">
+                        <Skeleton width={120} height={20} />
+                        <Skeleton width={80} height={16} />
+                      </div>
+                      <Skeleton width={60} height={24} />
+                    </div>
+                    <div className="flex gap-4">
+                      <Skeleton width={80} height={20} />
+                      <Skeleton width={80} height={20} />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : orders && orders.length > 0 ? (
               <div className="space-y-4">

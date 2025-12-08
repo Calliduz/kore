@@ -25,8 +25,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data.success && data.data) {
           setUser(data.data.user);
         }
-      } catch (error) {
-        // Not authenticated or session expired
+      } catch (error: any) {
+        // Silent fail for 401 (Not Authorized) during initial check
+        if (error.response?.status !== 401) {
+           console.error('Session check failed', error);
+        }
         setUser(null);
       } finally {
         setIsLoading(false);
