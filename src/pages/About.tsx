@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
+import { SEO } from '@/components/common/SEO';
 
 export default function About() {
   return (
     <div className="container max-w-4xl mx-auto space-y-20 py-16 animate-in fade-in duration-700">
+      <SEO title="About" description="KORE is a conceptual lifestyle brand dedicated to the art of fewer, better things. Swiss-inspired design philosophy." />
       <section className="text-center space-y-8">
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}

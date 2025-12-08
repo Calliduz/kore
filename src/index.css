@@ -137,9 +137,68 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1; 
   }
+  
+  /* Enhanced focus-visible styles for accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+  
+  /* Smooth scroll for the page */
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Glassmorphism Utilities */
 .glass {
   @apply bg-background/80 backdrop-blur-md border-b border-white/10;
 }
+
+/* Button hover micro-interactions */
+.btn-hover-lift {
+  @apply transition-all duration-200;
+}
+.btn-hover-lift:hover {
+  @apply -translate-y-0.5 shadow-lg;
+}
+.btn-hover-lift:active {
+  @apply translate-y-0 shadow-md;
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-300;
+}
+.card-hover:hover {
+  @apply -translate-y-1 shadow-xl;
+}
+
+/* Fade-in animation utility */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Stagger animation for lists */
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
+
+/* Selection styles */
+::selection {
+  @apply bg-primary/20 text-foreground;
+}
+

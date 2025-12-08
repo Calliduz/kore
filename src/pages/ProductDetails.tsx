@@ -8,8 +8,8 @@ import { useWishlistStore } from '@/store/wishlistStore';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import Skeleton from 'react-loading-skeleton';
-import { ShoppingCart, Package, Truck, Shield, Share2, Heart } from 'lucide-react';
-import { useState } from 'react';
+import { ShoppingCart, Package, Truck, Shield, Share2, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,6 +19,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Accordion, AccordionItem } from "@/components/ui/accordion";
+import { SEO } from '@/components/common/SEO';
 
 export default function ProductDetails() {
   const { id } = useParams<{ id: string }>();
@@ -78,6 +79,23 @@ export default function ProductDetails() {
 
   const images = data.images?.length ? data.images : [data.image || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&q=80&w=800'];
 
+  // Keyboard navigation for image gallery
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      setSelectedImage(prev => (prev > 0 ? prev - 1 : images.length - 1));
+    } else if (e.key === 'ArrowRight') {
+      setSelectedImage(prev => (prev < images.length - 1 ? prev + 1 : 0));
+    }
+  }, [images.length]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  const goToPrevImage = () => setSelectedImage(prev => (prev > 0 ? prev - 1 : images.length - 1));
+  const goToNextImage = () => setSelectedImage(prev => (prev < images.length - 1 ? prev + 1 : 0));
+
   const handleAddToCart = () => {
     addItem(data);
     toast.success(
@@ -124,6 +142,7 @@ export default function ProductDetails() {
 
   return (
     <div className="container py-8 space-y-8 animate-in fade-in duration-500">
+      <SEO title={data.name} description={data.description || `Shop ${data.name} at KORE. Premium quality ${data.category} product.`} />
       {/* Breadcrumb */}
       <Breadcrumb>
         <BreadcrumbList>
@@ -166,6 +185,41 @@ export default function ProductDetails() {
             >
                 <Heart className={`h-5 w-5 ${isInWishlist(data._id || data.id || '') ? 'fill-red-500 text-red-500' : 'text-foreground'}`} />
             </button>
+            
+            {/* Image Navigation Arrows */}
+            {images.length > 1 && (
+              <>
+                <button
+                  onClick={goToPrevImage}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 transition-all hover:bg-background hover:scale-110 z-10"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={goToNextImage}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-md opacity-0 group-hover:opacity-100 transition-all hover:bg-background hover:scale-110 z-10"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                {/* Image indicator dots */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                  {images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImage(idx)}
+                      className={`h-2 w-2 rounded-full transition-all ${
+                        selectedImage === idx 
+                          ? 'bg-primary w-6' 
+                          : 'bg-background/60 hover:bg-background/80'
+                      }`}
+                      aria-label={`Go to image ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           
           {/* Thumbnails - Horizontal Scroll on Mobile */}

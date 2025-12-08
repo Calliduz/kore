@@ -1,6 +1,7 @@
 import ProductCard from '@/components/features/ProductCard';
 import Hero from '@/components/features/Hero';
 import Newsletter from '@/components/features/Newsletter';
+import { SEO } from '@/components/common/SEO';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { type ApiResponse, type Product, type ProductsResponse } from '@/types';
@@ -55,6 +56,7 @@ export default function Home() {
 
   return (
     <div className="space-y-12">
+      <SEO title="Home" description="Discover premium Swiss-inspired products at KORE. Shop curated essentials for modern living." />
       <Hero />
       
       <section className="space-y-6">

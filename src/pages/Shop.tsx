@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, X, ChevronDown } from 'lucide-react';
+import { Filter, X, ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,6 +15,17 @@ import { api } from '@/lib/api';
 import { type ApiResponse, type ProductsResponse } from '@/types';
 import ProductCard from '@/components/features/ProductCard';
 import Skeleton from 'react-loading-skeleton';
+import { SEO } from '@/components/common/SEO';
+
+// Debounce hook for search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 const CATEGORIES = ['Electronics', 'Accessories', 'Home', 'Office', 'Travel'];
 const SORT_OPTIONS = [
@@ -29,19 +40,35 @@ export default function Shop() {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   
   // Filter State
-  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [searchInput, setSearchInput] = useState(searchParams.get('search') || '');
+  const debouncedSearch = useDebounce(searchInput, 300);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     searchParams.getAll('category')
   );
-  const [priceRange, setPriceRange] = useState(1000); // Only max price for simplicity with single range input
+  const [priceRange, setPriceRange] = useState(1000);
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest');
 
   // Sync state with URL
+  // Sync URL -> State
   useEffect(() => {
-    setSearch(searchParams.get('search') || '');
+    setSearchInput(searchParams.get('search') || '');
     setSelectedCategories(searchParams.getAll('category'));
     setSortBy(searchParams.get('sort') || 'newest');
   }, [searchParams]);
+
+  // Sync debounced search -> URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    if (debouncedSearch) {
+      params.set('search', debouncedSearch);
+    } else {
+      params.delete('search');
+    }
+    // Only update if actually changed
+    if (params.toString() !== searchParams.toString()) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [debouncedSearch]);
 
   const updateFilters = (newParams: any) => {
     const params = new URLSearchParams(searchParams);
@@ -59,10 +86,12 @@ export default function Shop() {
         params.set('sort', newParams.sort);
     }
 
-    // Handle Search
+    // Handle Search (for manual submit)
     if (newParams.search !== undefined) {
         if (newParams.search) params.set('search', newParams.search);
         else params.delete('search');
+    } else if (searchInput) {
+        params.set('search', searchInput);
     }
 
     setSearchParams(params);
@@ -80,24 +109,27 @@ export default function Shop() {
   const clearFilters = () => {
     setSelectedCategories([]);
     setPriceRange(1000);
-    setSearch('');
+    setSearchInput('');
     setSearchParams({});
   };
 
-  // Fetch Products
-  const { data, isLoading } = useQuery({
-    queryKey: ['products', search, selectedCategories, sortBy], 
+  const clearSearch = useCallback(() => {
+    setSearchInput('');
+    const params = new URLSearchParams(searchParams);
+    params.delete('search');
+    setSearchParams(params);
+  }, [searchParams, setSearchParams]);
+
+  // Fetch Products - use debouncedSearch for API calls
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['products', debouncedSearch, selectedCategories, sortBy], 
     queryFn: async () => {
-      // Build query string for API
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
+      if (debouncedSearch) params.append('search', debouncedSearch);
       selectedCategories.forEach(c => params.append('category', c));
       params.append('sort', sortBy);
       
-      // API returns ApiResponse<ProductsResponse> where ProductsResponse has { data: Product[], pagination: {...} }
       const { data } = await api.get<ApiResponse<ProductsResponse>>(`/products?${params.toString()}`);
-      
-      // Handle nested structure: ApiResponse.data = ProductsResponse, ProductsResponse.data = Product[]
       return data.data?.data || [];
     },
   });
@@ -108,15 +140,33 @@ export default function Shop() {
     product.price <= priceRange
   );
 
-  return (
+    return (
     <div className="container py-8 min-h-screen">
+      <SEO 
+        title={debouncedSearch ? `Search: ${debouncedSearch}` : 'Shop'} 
+        description="Browse our curated collection of premium products. Filter by category, price, and more." 
+      />
       <div className="flex flex-col gap-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Shop</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {debouncedSearch ? (
+                <span>Results for "<span className="text-primary">{debouncedSearch}</span>"</span>
+              ) : (
+                'Shop'
+              )}
+            </h1>
+            <p className="text-muted-foreground mt-1 flex items-center gap-2">
+              {isFetching && !isLoading && (
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              )}
               {filteredProducts?.length || 0} products found
+              {selectedCategories.length > 0 && (
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                  {selectedCategories.length} {selectedCategories.length === 1 ? 'category' : 'categories'}
+                </span>
+              )}
             </p>
           </div>
           
@@ -158,17 +208,24 @@ export default function Shop() {
                 {/* Search */}
                 <div className="space-y-4">
                     <h3 className="font-semibold">Search</h3>
-                    <Input 
-                        placeholder="Search products..." 
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            // Debounce could be added here
-                        }}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') updateFilters({ search });
-                        }}
-                    />
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                          placeholder="Search products..." 
+                          value={searchInput}
+                          onChange={(e) => setSearchInput(e.target.value)}
+                          className="pl-9 pr-8"
+                      />
+                      {searchInput && (
+                        <button
+                          onClick={clearSearch}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-full transition-colors"
+                          aria-label="Clear search"
+                        >
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        </button>
+                      )}
+                    </div>
                 </div>
 
                 {/* Categories */}

@@ -1,8 +1,44 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, ArrowRight } from 'lucide-react';
+import { Mail, ArrowRight, Loader2, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 export default function Newsletter() {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setIsLoading(true);
+    try {
+      await api.post('/newsletter/subscribe', { email });
+      setIsSubscribed(true);
+      toast.success('Welcome to the inner circle!', {
+        description: 'You\'ll receive our latest updates and exclusive offers.',
+      });
+      setEmail('');
+      // Reset success state after 3 seconds
+      setTimeout(() => setIsSubscribed(false), 3000);
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        toast.info('You\'re already subscribed!', {
+          description: 'We\'ll keep you updated with our latest offerings.',
+        });
+      } else {
+        toast.error('Subscription failed', {
+          description: 'Please try again later.',
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <section className="py-16 md:py-24 bg-card border-y relative overflow-hidden">
       <div className="container mx-auto px-4 md:px-6 relative z-10">
@@ -17,18 +53,36 @@ export default function Newsletter() {
             </p>
           </div>
 
-          <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
+          <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" onSubmit={handleSubmit}>
             <div className="relative flex-1">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input 
                 type="email" 
-                placeholder="Enter your email address" 
+                placeholder="Enter your email address"
+                value={email}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                disabled={isLoading}
                 className="pl-10 py-6 text-base bg-background/50 backdrop-blur-sm border-2 focus-visible:ring-0 focus-visible:border-primary transition-all rounded-lg"
               />
             </div>
-            <Button size="lg" className="py-6 px-8 text-base rounded-lg group">
-              Subscribe
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            <Button 
+              size="lg" 
+              className="py-6 px-8 text-base rounded-lg group min-w-[140px]"
+              disabled={isLoading || !email.trim()}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : isSubscribed ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Subscribed
+                </>
+              ) : (
+                <>
+                  Subscribe
+                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </Button>
           </form>
           
@@ -45,3 +99,4 @@ export default function Newsletter() {
     </section>
   );
 }
+
