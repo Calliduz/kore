@@ -101,7 +101,8 @@ export default function Shop() {
   });
 
   // Client-side Price Filtering
-  const filteredProducts = data?.filter(product => 
+  const products = Array.isArray(data) ? data : [];
+  const filteredProducts = products.filter(product => 
     product.price <= priceRange
   );
 

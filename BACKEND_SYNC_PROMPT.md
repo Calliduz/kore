@@ -1,63 +1,43 @@
 # Backend Sync Prompt
 
-This document outlines the **required** backend changes to support the latest frontend features: **Advanced Search & Filtering**, **Wishlist**, and **Newsletter**.
+This document outlines the **required** backend changes to support the latest frontend features.
 
-Please implement the following updates in your backend.
+## 1. Products API (Search & Filter)
 
-## 1. Advanced Product Search & Filtering
+The frontend `Shop` page relies on the following query parameters for the `GET /api/products` endpoint.
 
-To support the new `Shop` page with filters:
+**GET /api/products Query Params:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `search` | string | Search by name or description (case-insensitive) |
+| `category` | string or string[] | Filter by category (single or multiple) |
+| `sort` | string | `price_asc`, `price_desc`, `newest`, or `name_asc` |
+| `minPrice` | number | Minimum price filter |
+| `maxPrice` | number | Maximum price filter |
+| `cursor` | string | Pagination cursor |
+| `limit` | number | Items per page (default: 20) |
 
-### Endpoints
-- **GET** `/api/products` (Enhance functionality)
-  - **New Query Parameters**:
-    - `search`: String. Perform a case-insensitive, fuzzy search on `name` and `description`.
-    - `category`: String or Array of Strings. Filter products by category.
-    - `sort`: String. Options:
-      - `newest`: Sort by `createdAt` (desc).
-      - `price_asc`: Sort by `price` (asc).
-      - `price_desc`: Sort by `price` (desc).
-      - `name_asc`: Sort by `name` (asc).
-      - `minPrice` & `maxPrice`: Numbers. Filter by price range.
-  - **Response**: Standard paginated product list.
-
----
+**Response Format:**
+The API should return a standard paginated response. The frontend currently expects:
+```json
+{
+  "data": [ ...product objects... ],
+  "pagination": { ... } // Optional/If applicable
+}
+```
+*Note: If the structure differs, please update the frontend expectation.*
 
 ## 2. Wishlist Functionality
 
-The frontend has a fully functional UI for the Wishlist. We need to persist this data.
-
-### Data Model
-- **Wishlist Schema**:
-  - `user`: ObjectId (Reference to User)
-  - `products`: [ObjectId] (Array of References to Product)
-  - `timestamps`: createdAt, updatedAt
-
-### Endpoints
-- **GET** `/api/wishlist`
-  - **Auth**: Required.
-  - **Response**: List of populated Product objects in the user's wishlist.
-- **POST** `/api/wishlist/:productId`
-  - **Auth**: Required.
-  - **Action**: Add product to user's wishlist if not already present.
-- **DELETE** `/api/wishlist/:productId`
-  - **Auth**: Required.
-  - **Action**: Remove product from user's wishlist.
-
----
+- **GET** `/api/wishlist` (Auth Required): Return user's wishlist (populated products).
+- **POST** `/api/wishlist/:productId` (Auth Required): Add to wishlist.
+- **DELETE** `/api/wishlist/:productId` (Auth Required): Remove from wishlist.
 
 ## 3. Newsletter Subscription
 
-For the "Stay Connected" section on the homepage.
+- **POST** `/api/newsletter/subscribe`: Body `{ email: string }`.
 
-### Endpoints
-- **POST** `/api/newsletter/subscribe`
-  - **Body**: `{ email: string }`
-  - **Action**: Save the email. Ensure uniqueness.
-  - **Response**: Success message.
+## 4. Auth & User
 
----
-
-## 4. General Notes
-- Ensure all endpoints use standard HTTP status codes (200, 201, 400, 401, 404, 500).
-- Cors should be configured to allow requests from the frontend origin.
+- **GET** `/api/auth/me` (Auth Required): Should return the current user's profile.
+- Return `401 Unauthorized` if no valid token is present.
