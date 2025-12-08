@@ -4,12 +4,82 @@ This document describes the backend API requirements to fully support the Kore E
 
 ---
 
-## Technology Stack (Recommended)
+## System Architecture
+
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend (React)"]
+        UI[User Interface]
+        Redux[Redux Store]
+        RTK[RTK Query / Axios]
+    end
+
+    subgraph Backend["Backend (Express)"]
+        Router[API Router]
+        Auth[Auth Middleware]
+        Controllers[Controllers]
+        Models[Mongoose Models]
+    end
+
+    subgraph Database["MongoDB"]
+        Users[(Users)]
+        Products[(Products)]
+        Orders[(Orders)]
+    end
+
+    subgraph Stripe["Stripe"]
+        PI[PaymentIntent]
+    end
+
+    UI --> Redux
+    Redux --> RTK
+    RTK -->|HTTP + Cookies| Router
+    Router --> Auth
+    Auth --> Controllers
+    Controllers --> Models
+    Models --> Users & Products & Orders
+    Controllers --> PI
+```
+
+## Order & Payment Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant FE as Frontend
+    participant BE as Backend
+    participant DB as MongoDB
+    participant S as Stripe
+
+    U->>FE: Add to cart
+    FE->>FE: localStorage
+    
+    U->>FE: Checkout
+    FE->>BE: POST /api/orders
+    BE->>DB: Validate & create order
+    BE-->>FE: Order ID
+    
+    FE->>BE: POST /api/payment/create-payment-intent
+    BE->>S: Create PaymentIntent
+    S-->>BE: clientSecret
+    BE-->>FE: clientSecret
+    
+    FE->>S: confirmCardPayment
+    S-->>FE: Success
+    
+    FE->>BE: PUT /api/orders/:id/pay
+    BE->>DB: Mark as paid
+    BE-->>FE: Confirmation
+```
+
+---
+
+## Technology Stack
 - **Runtime**: Node.js with Express.js
 - **Database**: MongoDB with Mongoose
 - **Authentication**: JWT with HTTP-only cookies (access token + refresh token)
 - **Payments**: Stripe
-- **Password Hashing**: bcrypt (salt rounds: 10)
+- **Password Hashing**: bcrypt (salt rounds: 12)
 
 ---
 
@@ -38,6 +108,7 @@ This document describes the backend API requirements to fully support the Kore E
   category: String (required),
   images: [String] (required, array of URLs),
   stock: Number (required, default: 0),
+  isActive: Boolean (default: true),
   createdAt: Date,
   updatedAt: Date
 }
@@ -84,11 +155,11 @@ This document describes the backend API requirements to fully support the Kore E
 ## API Endpoints
 
 ### Response Format
-All endpoints should return:
+All endpoints return:
 ```javascript
 {
   success: true,
-  data: { ... },  // or nested as data.data for lists
+  data: { ... },
   message?: string
 }
 ```
@@ -98,7 +169,7 @@ Error responses:
 {
   success: false,
   message: "Error description",
-  errors?: [{ field: string, message: string }]  // for validation errors
+  errors?: [{ field: string, message: string }]
 }
 ```
 
@@ -287,36 +358,6 @@ const adminMiddleware = (req, res, next) => {
 
 ---
 
-## Seed Script Fix
-
-> [!CAUTION]
-> Ensure passwords are properly hashed with bcrypt!
-
-```javascript
-const bcrypt = require('bcryptjs');
-
-const seedUsers = async () => {
-  const hashedPassword = await bcrypt.hash('password123', 10);
-  
-  await User.create([
-    {
-      name: 'Admin User',
-      email: 'admin@example.com',
-      password: hashedPassword,
-      role: 'admin'
-    },
-    {
-      name: 'Test User',
-      email: 'user@example.com',
-      password: hashedPassword,
-      role: 'user'
-    }
-  ]);
-};
-```
-
----
-
 ## CORS Configuration
 
 ```javascript
@@ -333,9 +374,21 @@ app.use(cors({
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/kore
-JWT_SECRET=your-super-secret-jwt-key
+JWT_ACCESS_SECRET=your-super-secret-jwt-key
 JWT_REFRESH_SECRET=your-refresh-token-secret
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 NODE_ENV=development
 ```
+
+---
+
+## Test Accounts (After Seeding)
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | `admin@kore.com` | `Admin123!` |
+| User | `user@test.com` | `User123!` |
+
+> [!TIP]
+> Run `npm run seed` to populate the database with sample users, products, and an order.
