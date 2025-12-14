@@ -1,12 +1,18 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { type User, type AuthResponse, type ApiResponse } from '@/types';
-import { api } from '@/lib/api';
-import { toast } from 'sonner';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { type User, type AuthResponse, type ApiResponse } from "@/types";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (credentials: any) => Promise<void>;
+  login: (credentials: any) => Promise<User>;
   register: (data: any) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -21,14 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const { data } = await api.get<ApiResponse<{user: User}>>('/auth/me');
+        const { data } = await api.get<ApiResponse<{ user: User }>>("/auth/me");
         if (data.success && data.data) {
           setUser(data.data.user);
         }
       } catch (error: any) {
         // Silent fail for 401 (Not Authorized) during initial check
         if (error.response?.status !== 401) {
-           console.error('Session check failed', error);
+          console.error("Session check failed", error);
         }
         setUser(null);
       } finally {
@@ -38,39 +44,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (credentials: any) => {
+  const login = async (credentials: any): Promise<User> => {
     try {
-      const { data } = await api.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
+      const { data } = await api.post<ApiResponse<AuthResponse>>(
+        "/auth/login",
+        credentials
+      );
       if (data.success && data.data) {
         setUser(data.data.user);
-        toast.success('Welcome back!');
+        toast.success("Welcome back!");
+        return data.data.user;
       }
+      throw new Error("Login failed");
     } catch (error: any) {
-      toast.error(error.message || 'Login failed');
+      toast.error(error.message || "Login failed");
       throw error;
     }
   };
 
   const register = async (userData: any) => {
     try {
-      const { data } = await api.post<ApiResponse<AuthResponse>>('/auth/register', userData);
-       if (data.success && data.data) {
+      const { data } = await api.post<ApiResponse<AuthResponse>>(
+        "/auth/register",
+        userData
+      );
+      if (data.success && data.data) {
         setUser(data.data.user);
-        toast.success('Account created successfully');
+        toast.success("Account created successfully");
       }
     } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
+      toast.error(error.message || "Registration failed");
       throw error;
     }
   };
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post("/auth/logout");
       setUser(null);
-      toast.success('Logged out successfully');
+      toast.success("Logged out successfully");
     } catch (error) {
-      console.error('Logout error', error);
+      console.error("Logout error", error);
       // Force local logout anyway
       setUser(null);
     }
@@ -86,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

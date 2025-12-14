@@ -208,7 +208,7 @@ export default function AdminOrders() {
                     ${order.totalPrice.toFixed(2)}
                   </td>
                   <td className="p-4 text-right">
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2 justify-end items-center">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -218,18 +218,53 @@ export default function AdminOrders() {
                       </Button>
 
                       {order.isPaid && !order.isDelivered && (
-                        <select
-                          value={order.status || "processing"}
-                          onChange={(e) =>
-                            handleStatusUpdate(order._id, e.target.value)
-                          }
-                          disabled={updatingStatus === order._id}
-                          className="p-1 text-xs border rounded bg-background"
-                        >
-                          <option value="processing">Processing</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="delivered">Delivered</option>
-                        </select>
+                        <div className="relative">
+                          <select
+                            value={order.status || "processing"}
+                            onChange={(e) =>
+                              handleStatusUpdate(order._id, e.target.value)
+                            }
+                            disabled={updatingStatus === order._id}
+                            className={`
+                              appearance-none cursor-pointer
+                              pl-3 pr-8 py-1.5 text-xs font-medium
+                              border rounded-lg bg-background
+                              transition-all duration-200
+                              focus:ring-2 focus:ring-primary/20 focus:border-primary
+                              ${
+                                updatingStatus === order._id ? "opacity-50" : ""
+                              }
+                              ${
+                                order.status === "shipped"
+                                  ? "border-purple-300 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30"
+                                  : order.status === "processing"
+                                  ? "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30"
+                                  : "border-gray-300 dark:border-gray-700"
+                              }
+                            `}
+                          >
+                            <option value="processing">📦 Processing</option>
+                            <option value="shipped">🚚 Shipped</option>
+                            <option value="delivered">✅ Delivered</option>
+                          </select>
+                          {updatingStatus === order._id ? (
+                            <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 animate-spin text-muted-foreground" />
+                          ) : (
+                            <svg
+                              className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          )}
+                        </div>
                       )}
                     </div>
                   </td>
@@ -364,39 +399,162 @@ export default function AdminOrders() {
               </div>
             </div>
 
-            {/* Actions */}
+            {/* Actions - Status Stepper */}
             {selectedOrder.isPaid && !selectedOrder.isDelivered && (
-              <div className="flex gap-2 justify-end pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    handleStatusUpdate(selectedOrder._id, "processing")
-                  }
-                  disabled={updatingStatus === selectedOrder._id}
-                >
-                  <Clock className="h-4 w-4 mr-2" />
-                  Processing
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    handleStatusUpdate(selectedOrder._id, "shipped")
-                  }
-                  disabled={updatingStatus === selectedOrder._id}
-                >
-                  <Truck className="h-4 w-4 mr-2" />
-                  Shipped
-                </Button>
-                <Button
-                  onClick={() => {
-                    handleStatusUpdate(selectedOrder._id, "delivered");
-                    setSelectedOrder(null);
-                  }}
-                  disabled={updatingStatus === selectedOrder._id}
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Mark Delivered
-                </Button>
+              <div className="pt-4 border-t space-y-4">
+                <h4 className="font-medium text-sm">Update Order Status</h4>
+
+                {/* Visual Status Stepper */}
+                <div className="flex items-center justify-between gap-2">
+                  {/* Processing Step */}
+                  <button
+                    onClick={() =>
+                      handleStatusUpdate(selectedOrder._id, "processing")
+                    }
+                    disabled={updatingStatus === selectedOrder._id}
+                    className={`
+                      flex-1 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all duration-200
+                      ${
+                        selectedOrder.status === "processing" ||
+                        !selectedOrder.status
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                          : "border-muted hover:border-blue-300 hover:bg-blue-50/50 dark:hover:bg-blue-950/20"
+                      }
+                      ${
+                        updatingStatus === selectedOrder._id
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }
+                    `}
+                  >
+                    <div
+                      className={`
+                      h-10 w-10 rounded-full flex items-center justify-center
+                      ${
+                        selectedOrder.status === "processing" ||
+                        !selectedOrder.status
+                          ? "bg-blue-500 text-white"
+                          : "bg-muted text-muted-foreground"
+                      }
+                    `}
+                    >
+                      {updatingStatus === selectedOrder._id ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Clock className="h-5 w-5" />
+                      )}
+                    </div>
+                    <span
+                      className={`text-xs font-medium ${
+                        selectedOrder.status === "processing" ||
+                        !selectedOrder.status
+                          ? "text-blue-700 dark:text-blue-300"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      Processing
+                    </span>
+                  </button>
+
+                  {/* Connector */}
+                  <div
+                    className={`h-0.5 w-6 flex-shrink-0 ${
+                      selectedOrder.status === "shipped" ||
+                      selectedOrder.status === "delivered"
+                        ? "bg-purple-500"
+                        : "bg-muted"
+                    }`}
+                  />
+
+                  {/* Shipped Step */}
+                  <button
+                    onClick={() =>
+                      handleStatusUpdate(selectedOrder._id, "shipped")
+                    }
+                    disabled={updatingStatus === selectedOrder._id}
+                    className={`
+                      flex-1 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all duration-200
+                      ${
+                        selectedOrder.status === "shipped"
+                          ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
+                          : "border-muted hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/20"
+                      }
+                      ${
+                        updatingStatus === selectedOrder._id
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }
+                    `}
+                  >
+                    <div
+                      className={`
+                      h-10 w-10 rounded-full flex items-center justify-center
+                      ${
+                        selectedOrder.status === "shipped"
+                          ? "bg-purple-500 text-white"
+                          : "bg-muted text-muted-foreground"
+                      }
+                    `}
+                    >
+                      {updatingStatus === selectedOrder._id ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Truck className="h-5 w-5" />
+                      )}
+                    </div>
+                    <span
+                      className={`text-xs font-medium ${
+                        selectedOrder.status === "shipped"
+                          ? "text-purple-700 dark:text-purple-300"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      Shipped
+                    </span>
+                  </button>
+
+                  {/* Connector */}
+                  <div
+                    className={`h-0.5 w-6 flex-shrink-0 ${
+                      selectedOrder.status === "delivered"
+                        ? "bg-green-500"
+                        : "bg-muted"
+                    }`}
+                  />
+
+                  {/* Delivered Step */}
+                  <button
+                    onClick={() => {
+                      handleStatusUpdate(selectedOrder._id, "delivered");
+                      setSelectedOrder(null);
+                    }}
+                    disabled={updatingStatus === selectedOrder._id}
+                    className={`
+                      flex-1 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all duration-200
+                      border-muted hover:border-green-400 hover:bg-green-50/50 dark:hover:bg-green-950/20
+                      ${
+                        updatingStatus === selectedOrder._id
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }
+                    `}
+                  >
+                    <div className="h-10 w-10 rounded-full flex items-center justify-center bg-muted text-muted-foreground">
+                      {updatingStatus === selectedOrder._id ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-5 w-5" />
+                      )}
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Delivered
+                    </span>
+                  </button>
+                </div>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  Click on a status to update the order
+                </p>
               </div>
             )}
           </div>

@@ -8,7 +8,6 @@ import {
   Tag,
   Users,
   LogOut,
-  ChevronLeft,
   Menu,
   X,
   Store,
@@ -128,13 +127,6 @@ export default function AdminLayout() {
 
           {/* Bottom Section */}
           <div className="p-4 border-t space-y-2">
-            <Link
-              to="/"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all font-medium"
-            >
-              <ChevronLeft className="h-5 w-5" />
-              Back to Store
-            </Link>
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all font-medium"
