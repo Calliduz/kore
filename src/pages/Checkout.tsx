@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCartStore } from "@/store/cartStore";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import {
   Loader2,
   ShoppingBag,
@@ -14,13 +13,17 @@ import {
   CreditCard,
   ChevronRight,
   Check,
+  Plus,
+  MapPin,
 } from "lucide-react";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useAuth } from "@/hooks/useAuth";
+import { useAddresses } from "@/hooks/useUserData";
 import StripeProvider from "@/components/features/StripeProvider";
 import PaymentForm from "@/components/features/PaymentForm";
 import CouponInput from "@/components/features/CouponInput";
 import { type Coupon } from "@/hooks/useCoupons";
+import { type SavedAddress } from "@/types";
 
 const shippingSchema = z.object({
   address: z.string().min(5, "Address must be at least 5 characters"),
@@ -36,6 +39,7 @@ type CheckoutStep = "shipping" | "payment" | "confirmation";
 export default function Checkout() {
   const { items, total, clearCart, getOrderItems } = useCartStore();
   const { user } = useAuth();
+  const { data: savedAddresses, isLoading: addressesLoading } = useAddresses();
   const navigate = useNavigate();
   const [step, setStep] = useState<CheckoutStep>("shipping");
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -43,6 +47,10 @@ export default function Checkout() {
     useState<ShippingFormData | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    null
+  );
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
 
   const createOrder = useCreateOrder();
 
@@ -53,6 +61,17 @@ export default function Checkout() {
   } = useForm<ShippingFormData>({
     resolver: zodResolver(shippingSchema),
   });
+
+  // Set default address when addresses load
+  useEffect(() => {
+    if (savedAddresses && savedAddresses.length > 0 && !selectedAddressId) {
+      const defaultAddr =
+        savedAddresses.find((a) => a.isDefault) || savedAddresses[0];
+      setSelectedAddressId(defaultAddr._id);
+    } else if (savedAddresses && savedAddresses.length === 0) {
+      setShowNewAddressForm(true);
+    }
+  }, [savedAddresses, selectedAddressId]);
 
   // Redirect if cart is empty and not in confirmation step
   useEffect(() => {
@@ -78,7 +97,35 @@ export default function Checkout() {
     (subtotalAfterDiscount + taxPrice + shippingPrice).toFixed(2)
   );
 
+  const handleSelectAddress = (address: SavedAddress) => {
+    setSelectedAddressId(address._id);
+    setShowNewAddressForm(false);
+  };
+
   const onShippingSubmit = async (data: ShippingFormData) => {
+    await submitOrder(data);
+  };
+
+  const handleContinueWithSavedAddress = async () => {
+    if (!selectedAddressId || !savedAddresses) return;
+
+    const selected = savedAddresses.find((a) => a._id === selectedAddressId);
+    if (!selected) {
+      toast.error("Please select an address");
+      return;
+    }
+
+    const addressData: ShippingFormData = {
+      address: selected.address,
+      city: selected.city,
+      postalCode: selected.postalCode,
+      country: selected.country,
+    };
+
+    await submitOrder(addressData);
+  };
+
+  const submitOrder = async (data: ShippingFormData) => {
     try {
       // Create order
       const order = await createOrder.mutateAsync({
@@ -106,6 +153,8 @@ export default function Checkout() {
   };
 
   if (items.length === 0 && step !== "confirmation") return null;
+
+  const hasSavedAddresses = savedAddresses && savedAddresses.length > 0;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -145,94 +194,190 @@ export default function Checkout() {
                 <h2 className="text-xl font-semibold">Shipping Address</h2>
               </div>
 
-              <form
-                onSubmit={handleSubmit(onShippingSubmit)}
-                className="space-y-4"
-              >
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Address
-                  </label>
-                  <input
-                    {...register("address")}
-                    placeholder="123 Main Street"
-                    className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                  {errors.address && (
-                    <p className="text-destructive text-sm mt-1">
-                      {errors.address.message}
+              {/* Saved Addresses */}
+              {!addressesLoading &&
+                hasSavedAddresses &&
+                !showNewAddressForm && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Select a saved address or add a new one:
                     </p>
-                  )}
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      City
-                    </label>
-                    <input
-                      {...register("city")}
-                      placeholder="New York"
-                      className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                    {errors.city && (
-                      <p className="text-destructive text-sm mt-1">
-                        {errors.city.message}
-                      </p>
-                    )}
+                    <div className="space-y-2">
+                      {savedAddresses.map((addr) => (
+                        <button
+                          key={addr._id}
+                          onClick={() => handleSelectAddress(addr)}
+                          className={`w-full p-4 rounded-lg border text-left transition-all ${
+                            selectedAddressId === addr._id
+                              ? "border-primary bg-primary/5 ring-1 ring-primary"
+                              : "border-muted hover:border-primary/50"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-primary">
+                              {addr.label}
+                            </span>
+                            {addr.isDefault && (
+                              <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                Default
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-medium">{addr.address}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {addr.city}, {addr.postalCode}, {addr.country}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowNewAddressForm(true)}
+                      className="w-full gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Use a Different Address
+                    </Button>
+
+                    <Button
+                      className="w-full mt-4"
+                      size="lg"
+                      disabled={!selectedAddressId || createOrder.isPending}
+                      onClick={handleContinueWithSavedAddress}
+                    >
+                      {createOrder.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating Order...
+                        </>
+                      ) : (
+                        <>
+                          Continue to Payment
+                          <ChevronRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Postal Code
-                    </label>
-                    <input
-                      {...register("postalCode")}
-                      placeholder="10001"
-                      className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                    {errors.postalCode && (
-                      <p className="text-destructive text-sm mt-1">
-                        {errors.postalCode.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                )}
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Country
-                  </label>
-                  <input
-                    {...register("country")}
-                    placeholder="USA"
-                    className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                  {errors.country && (
-                    <p className="text-destructive text-sm mt-1">
-                      {errors.country.message}
-                    </p>
+              {/* New Address Form */}
+              {(showNewAddressForm ||
+                (!addressesLoading && !hasSavedAddresses)) && (
+                <>
+                  {hasSavedAddresses && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowNewAddressForm(false)}
+                      className="mb-4 -ml-2"
+                    >
+                      ← Back to saved addresses
+                    </Button>
                   )}
-                </div>
 
-                <Button
-                  type="submit"
-                  className="w-full mt-6"
-                  size="lg"
-                  disabled={isSubmitting || createOrder.isPending}
-                >
-                  {isSubmitting || createOrder.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Order...
-                    </>
-                  ) : (
-                    <>
-                      Continue to Payment
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
+                  <form
+                    onSubmit={handleSubmit(onShippingSubmit)}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Address
+                      </label>
+                      <input
+                        {...register("address")}
+                        placeholder="123 Main Street"
+                        className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+                      />
+                      {errors.address && (
+                        <p className="text-destructive text-sm mt-1">
+                          {errors.address.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          City
+                        </label>
+                        <input
+                          {...register("city")}
+                          placeholder="New York"
+                          className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                        {errors.city && (
+                          <p className="text-destructive text-sm mt-1">
+                            {errors.city.message}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Postal Code
+                        </label>
+                        <input
+                          {...register("postalCode")}
+                          placeholder="10001"
+                          className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                        {errors.postalCode && (
+                          <p className="text-destructive text-sm mt-1">
+                            {errors.postalCode.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        Country
+                      </label>
+                      <input
+                        {...register("country")}
+                        placeholder="USA"
+                        className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
+                      />
+                      {errors.country && (
+                        <p className="text-destructive text-sm mt-1">
+                          {errors.country.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full mt-6"
+                      size="lg"
+                      disabled={isSubmitting || createOrder.isPending}
+                    >
+                      {isSubmitting || createOrder.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating Order...
+                        </>
+                      ) : (
+                        <>
+                          Continue to Payment
+                          <ChevronRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </>
+              )}
+
+              {/* Loading state */}
+              {addressesLoading && (
+                <div className="text-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Loading addresses...
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -289,7 +434,7 @@ export default function Checkout() {
               )}
 
               <div className="flex gap-4 justify-center">
-                <Button variant="outline" onClick={() => navigate("/account")}>
+                <Button variant="outline" onClick={() => navigate("/orders")}>
                   View Orders
                 </Button>
                 <Button onClick={() => navigate("/")}>Continue Shopping</Button>

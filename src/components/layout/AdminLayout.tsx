@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Store,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -23,6 +24,7 @@ const navItems = [
   { path: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { path: "/admin/coupons", label: "Coupons", icon: Tag },
   { path: "/admin/users", label: "Users", icon: Users },
+  { path: "/admin/refunds", label: "Refunds", icon: RotateCcw },
 ];
 
 export default function AdminLayout() {

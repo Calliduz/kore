@@ -1,6 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useMyOrders } from "@/hooks/useOrders";
 import { Button } from "@/components/ui/button";
+import AddressManager from "@/components/features/AddressManager";
+import PaymentMethodManager from "@/components/features/PaymentMethodManager";
 import {
   Package,
   User as UserIcon,
@@ -10,6 +12,8 @@ import {
   CheckCircle,
   Truck,
   Loader2,
+  CreditCard,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -90,6 +94,9 @@ export default function Account() {
     });
   };
 
+  // Get recent orders (last 3)
+  const recentOrders = orders?.slice(0, 3) || [];
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
@@ -106,7 +113,7 @@ export default function Account() {
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Profile Info */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="space-y-6">
           <div className="p-6 rounded-lg border bg-card">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -202,14 +209,22 @@ export default function Account() {
           </div>
         </div>
 
-        {/* Order History */}
+        {/* Recent Orders */}
         <div className="lg:col-span-2">
           <div className="p-6 rounded-lg border bg-card">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <Package className="h-5 w-5" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <Package className="h-5 w-5" />
+                </div>
+                <h2 className="font-semibold">Recent Orders</h2>
               </div>
-              <h2 className="font-semibold">Order History</h2>
+              <Button asChild variant="ghost" size="sm" className="gap-1">
+                <Link to="/orders">
+                  View All
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
 
             {ordersLoading ? (
@@ -226,22 +241,18 @@ export default function Account() {
                       </div>
                       <Skeleton width={60} height={24} />
                     </div>
-                    <div className="flex gap-4">
-                      <Skeleton width={80} height={20} />
-                      <Skeleton width={80} height={20} />
-                    </div>
                   </div>
                 ))}
               </div>
-            ) : orders && orders.length > 0 ? (
-              <div className="space-y-4">
-                {orders.map((order) => (
+            ) : recentOrders.length > 0 ? (
+              <div className="space-y-3">
+                {recentOrders.map((order) => (
                   <Link
                     key={order._id}
                     to={`/order/${order._id}`}
                     className="block p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
                   >
-                    <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-start justify-between">
                       <div>
                         <p className="font-medium">
                           Order #{order._id.slice(-8).toUpperCase()}
@@ -255,7 +266,7 @@ export default function Account() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-4 text-sm mt-2">
                       <div className="flex items-center gap-1">
                         {order.isPaid ? (
                           <>
@@ -290,23 +301,48 @@ export default function Account() {
                           </>
                         )}
                       </div>
+
+                      {/* Pay Now for unpaid orders */}
+                      {!order.isPaid && (
+                        <Button
+                          size="sm"
+                          className="ml-auto gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                          asChild
+                        >
+                          <Link to={`/order/${order._id}`}>
+                            <CreditCard className="h-3 w-3" />
+                            Pay Now
+                          </Link>
+                        </Button>
+                      )}
                     </div>
                   </Link>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 text-muted-foreground space-y-2">
-                <Package className="h-12 w-12 mx-auto opacity-50" />
+              <div className="text-center py-8 text-muted-foreground">
+                <Package className="h-12 w-12 mx-auto opacity-50 mb-2" />
                 <p className="font-medium">No orders yet</p>
                 <p className="text-sm">
                   When you make a purchase, it will appear here.
                 </p>
                 <Button asChild className="mt-4">
-                  <Link to="/">Start Shopping</Link>
+                  <Link to="/shop">Start Shopping</Link>
                 </Button>
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Addresses and Payment Methods */}
+      <div className="grid md:grid-cols-2 gap-8">
+        <div className="p-6 rounded-lg border bg-card">
+          <AddressManager />
+        </div>
+        <div className="p-6 rounded-lg border bg-card">
+          <PaymentMethodManager />
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ import Wishlist from "@/pages/Wishlist";
 import About from "@/pages/About";
 import NotFound from "@/pages/NotFound";
 import OrderDetails from "@/pages/OrderDetails";
+import MyOrders from "@/pages/MyOrders";
 
 // Admin Pages
 import AdminOverview from "@/pages/admin/AdminOverview";
@@ -27,6 +28,7 @@ import AdminProducts from "@/pages/admin/AdminProducts";
 import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminCoupons from "@/pages/admin/AdminCoupons";
 import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminRefunds from "@/pages/admin/AdminRefunds";
 
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -81,6 +83,14 @@ function App() {
                     }
                   />
                   <Route
+                    path="orders"
+                    element={
+                      <ProtectedRoute>
+                        <MyOrders />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="order/:id"
                     element={
                       <ProtectedRoute>
@@ -98,6 +108,7 @@ function App() {
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="users" element={<AdminUsers />} />
+                  <Route path="refunds" element={<AdminRefunds />} />
                 </Route>
               </Routes>
               <Toaster

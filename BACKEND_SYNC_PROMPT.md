@@ -89,7 +89,7 @@ Query Parameters:
 
 ---
 
-## ✅ Users API (NEW)
+## ✅ Users API
 
 **GET /api/users** (Admin Auth Required) - Get all users
 
@@ -119,6 +119,79 @@ Query Parameters:
 **DELETE /api/users/:id** (Admin Auth Required) - Delete user
 
 - Returns 403 if trying to delete self
+
+---
+
+## ✅ User Addresses API (NEW)
+
+**GET /api/users/addresses** (Auth Required) - Get user's saved addresses
+
+```json
+{
+  "success": true,
+  "data": {
+    "addresses": [
+      {
+        "_id": "...",
+        "label": "Home",
+        "address": "123 Main St",
+        "city": "New York",
+        "postalCode": "10001",
+        "country": "USA",
+        "isDefault": true,
+        "createdAt": "2024-01-01T00:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+**POST /api/users/addresses** (Auth Required) - Create new address
+
+- Body: `{ label, address, city, postalCode, country, isDefault? }`
+
+**PUT /api/users/addresses/:id** (Auth Required) - Update address
+
+- Body: `{ label?, address?, city?, postalCode?, country?, isDefault? }`
+
+**DELETE /api/users/addresses/:id** (Auth Required) - Delete address
+
+**PUT /api/users/addresses/:id/default** (Auth Required) - Set as default address
+
+---
+
+## ✅ User Payment Methods API (NEW)
+
+**GET /api/users/payment-methods** (Auth Required) - Get user's saved payment methods
+
+```json
+{
+  "success": true,
+  "data": {
+    "paymentMethods": [
+      {
+        "_id": "...",
+        "stripePaymentMethodId": "pm_...",
+        "last4": "4242",
+        "brand": "visa",
+        "expiryMonth": 12,
+        "expiryYear": 2025,
+        "isDefault": true,
+        "createdAt": "2024-01-01T00:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+**POST /api/users/payment-methods** (Auth Required) - Add payment method
+
+- Body: `{ stripePaymentMethodId: string }`
+- Backend attaches payment method to Stripe customer and stores metadata
+
+**DELETE /api/users/payment-methods/:id** (Auth Required) - Remove payment method
+
+**PUT /api/users/payment-methods/:id/default** (Auth Required) - Set as default
 
 ---
 
@@ -159,9 +232,58 @@ Query Parameters:
 
 **PUT /api/orders/:id/deliver** (Admin Auth Required) - Mark order as delivered
 
-**PUT /api/orders/:id/status** (Admin Auth Required) - Update order status (NEW)
+**PUT /api/orders/:id/status** (Admin Auth Required) - Update order status
 
 - Body: `{ status: "processing" | "shipped" | "delivered" }`
+
+---
+
+## ✅ Refund Requests API (NEW)
+
+**POST /api/orders/:id/refund** (Auth Required) - Request refund for an order
+
+- Body:
+
+```json
+{
+  "reason": "damaged" | "wrong_item" | "not_as_described" | "changed_mind" | "other",
+  "description": "Optional details...",
+  "items": [{ "product": "product_id", "qty": 1 }]
+}
+```
+
+- Response: `{ success: true, data: { refund: RefundRequest } }`
+
+**GET /api/orders/:id/refund** (Auth Required) - Get refund status for an order
+
+```json
+{
+  "success": true,
+  "data": {
+    "refund": {
+      "_id": "...",
+      "order": "order_id",
+      "user": "user_id",
+      "reason": "damaged",
+      "description": "...",
+      "items": [...],
+      "totalRefundAmount": 49.99,
+      "status": "pending" | "approved" | "rejected" | "processed",
+      "adminNotes": "...",
+      "processedAt": "...",
+      "createdAt": "..."
+    }
+  }
+}
+```
+
+**GET /api/users/refunds** (Auth Required) - Get all user's refund requests
+
+**GET /api/admin/refunds** (Admin Auth Required) - Get all refund requests
+
+**PUT /api/admin/refunds/:id** (Admin Auth Required) - Update refund status
+
+- Body: `{ status: "approved" | "rejected" | "processed", adminNotes?: string }`
 
 ---
 
@@ -245,15 +367,41 @@ Query Parameters:
 
 ## Mongoose Schemas
 
-### User Schema
+### User Schema (Updated)
 
 ```javascript
+const addressSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true }, // "Home", "Work", etc.
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    country: { type: String, required: true },
+    isDefault: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+const paymentMethodSchema = new mongoose.Schema(
+  {
+    stripePaymentMethodId: { type: String, required: true },
+    last4: { type: String, required: true },
+    brand: { type: String, required: true },
+    expiryMonth: { type: Number, required: true },
+    expiryYear: { type: Number, required: true },
+    isDefault: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    addresses: [addressSchema],
+    paymentMethods: [paymentMethodSchema],
   },
   { timestamps: true }
 );
@@ -277,6 +425,49 @@ const orderSchema = new mongoose.Schema({
   status: { type: String, enum: ['processing', 'shipped', 'delivered'], default: 'processing' },
   paymentResult: {...},
 }, { timestamps: true });
+```
+
+### Refund Request Schema (NEW)
+
+```javascript
+const refundRequestSchema = new mongoose.Schema(
+  {
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+    },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    reason: {
+      type: String,
+      enum: [
+        "damaged",
+        "wrong_item",
+        "not_as_described",
+        "changed_mind",
+        "other",
+      ],
+      required: true,
+    },
+    description: { type: String },
+    items: [
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+        qty: { type: Number, required: true },
+        refundAmount: { type: Number },
+      },
+    ],
+    totalRefundAmount: { type: Number, required: true },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "processed"],
+      default: "pending",
+    },
+    adminNotes: { type: String },
+    processedAt: { type: Date },
+  },
+  { timestamps: true }
+);
 ```
 
 ### Coupon Schema
@@ -327,6 +518,8 @@ reviewSchema.index({ user: 1, product: 1 }, { unique: true });
 
 All core e-commerce functionality implemented. Key new additions:
 
-- **User Management API** for admin to view/update/delete users
-- **Order Status API** for tracking order progress (processing → shipped → delivered)
-- **Updated User schema** with `_id` field for consistency
+- **User Addresses API** - CRUD for saved shipping addresses (embedded in User)
+- **User Payment Methods API** - Managing saved payment methods via Stripe
+- **Refund Requests API** - Full refund request workflow with admin approval
+- **Updated User Schema** - Now includes `addresses[]` and `paymentMethods[]`
+- **New RefundRequest Schema** - For tracking return/refund requests

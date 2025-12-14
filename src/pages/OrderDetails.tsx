@@ -1,7 +1,14 @@
+import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useOrder } from "@/hooks/useOrders";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrderRefund } from "@/hooks/useRefunds";
 import { Button } from "@/components/ui/button";
+import Modal from "@/components/ui/modal";
+import Receipt from "@/components/features/Receipt";
+import RefundRequestModal from "@/components/features/RefundRequestModal";
+import StripeProvider from "@/components/features/StripeProvider";
+import PaymentForm from "@/components/features/PaymentForm";
 import Skeleton from "react-loading-skeleton";
 import {
   Package,
@@ -11,14 +18,29 @@ import {
   Clock,
   MapPin,
   ChevronLeft,
+  Printer,
+  RotateCcw,
+  AlertCircle,
 } from "lucide-react";
 import { SEO } from "@/components/common/SEO";
+import { toast } from "sonner";
 
 export default function OrderDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: order, isLoading, error } = useOrder(id);
+  const { data: order, isLoading, error, refetch } = useOrder(id);
+  const { data: refundRequest } = useOrderRefund(id);
+
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentModal(false);
+    refetch();
+    toast.success("Payment completed successfully!");
+  };
 
   if (isLoading) {
     return (
@@ -52,21 +74,23 @@ export default function OrderDetails() {
   }
 
   const orderNumber = order._id.slice(-8).toUpperCase();
+  const canRequestRefund = order.isPaid && order.isDelivered && !refundRequest;
+  const hasRefundRequest = !!refundRequest;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       <SEO title={`Order #${orderNumber}`} />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <Button
             variant="ghost"
-            onClick={() => navigate("/account")}
+            onClick={() => navigate("/orders")}
             className="gap-2 mb-2 -ml-2"
           >
             <ChevronLeft className="h-4 w-4" />
-            Back to Account
+            Back to Orders
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">
             Order #{orderNumber}
@@ -81,7 +105,65 @@ export default function OrderDetails() {
             })}
           </p>
         </div>
+
+        {/* Header Actions */}
+        <div className="flex gap-2">
+          {order.isPaid && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowReceiptModal(true)}
+              className="gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              Receipt
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Refund Status Banner */}
+      {hasRefundRequest && (
+        <div
+          className={`p-4 rounded-lg border flex items-center gap-3 ${
+            refundRequest.status === "pending"
+              ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800"
+              : refundRequest.status === "approved" ||
+                refundRequest.status === "processed"
+              ? "bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800"
+              : "bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800"
+          }`}
+        >
+          <AlertCircle
+            className={`h-5 w-5 ${
+              refundRequest.status === "pending"
+                ? "text-yellow-600"
+                : refundRequest.status === "approved" ||
+                  refundRequest.status === "processed"
+                ? "text-green-600"
+                : "text-red-600"
+            }`}
+          />
+          <div>
+            <p className="font-medium">
+              Refund Request:{" "}
+              <span className="capitalize">{refundRequest.status}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {refundRequest.status === "pending" &&
+                "Your refund request is being reviewed."}
+              {refundRequest.status === "approved" &&
+                "Your refund has been approved and will be processed soon."}
+              {refundRequest.status === "processed" &&
+                `Refund of $${refundRequest.totalRefundAmount.toFixed(
+                  2
+                )} has been processed.`}
+              {refundRequest.status === "rejected" &&
+                "Your refund request was not approved."}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Status Timeline */}
       <div className="p-6 rounded-lg border bg-card">
@@ -273,6 +355,29 @@ export default function OrderDetails() {
 
             {/* Actions */}
             <div className="mt-6 space-y-2">
+              {/* Pay Now Button - for unpaid orders */}
+              {!order.isPaid && (
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => setShowPaymentModal(true)}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Pay Now - ${order.totalPrice.toFixed(2)}
+                </Button>
+              )}
+
+              {/* Request Refund Button - for delivered, paid orders without existing refund */}
+              {canRequestRefund && (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => setShowRefundModal(true)}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Request Refund
+                </Button>
+              )}
+
               <Button asChild variant="outline" className="w-full">
                 <Link to="/shop">Continue Shopping</Link>
               </Button>
@@ -280,6 +385,46 @@ export default function OrderDetails() {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <Modal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        title="Complete Payment"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-lg bg-muted/50">
+            <p className="text-sm text-muted-foreground">Order Total</p>
+            <p className="text-2xl font-bold">${order.totalPrice.toFixed(2)}</p>
+          </div>
+          <StripeProvider>
+            <PaymentForm
+              orderId={order._id}
+              totalPrice={order.totalPrice}
+              userEmail={user?.email || ""}
+              onSuccess={handlePaymentSuccess}
+            />
+          </StripeProvider>
+        </div>
+      </Modal>
+
+      {/* Receipt Modal */}
+      <Modal
+        isOpen={showReceiptModal}
+        onClose={() => setShowReceiptModal(false)}
+        title="Order Receipt"
+        size="lg"
+      >
+        <Receipt order={order} userName={user?.name} />
+      </Modal>
+
+      {/* Refund Modal */}
+      <RefundRequestModal
+        isOpen={showRefundModal}
+        onClose={() => setShowRefundModal(false)}
+        order={order}
+      />
     </div>
   );
 }

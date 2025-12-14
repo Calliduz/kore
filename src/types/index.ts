@@ -113,3 +113,64 @@ export interface StripeConfigResponse {
 export interface PaymentIntentResponse {
   clientSecret: string;
 }
+
+// Saved shipping address with metadata
+export interface SavedAddress {
+  _id: string;
+  label: string; // e.g., "Home", "Work", "Office"
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  isDefault: boolean;
+  createdAt?: string;
+}
+
+// Saved payment method (Stripe)
+export interface SavedPaymentMethod {
+  _id: string;
+  stripePaymentMethodId: string;
+  last4: string;
+  brand: string; // visa, mastercard, amex, etc.
+  expiryMonth: number;
+  expiryYear: number;
+  isDefault: boolean;
+  createdAt?: string;
+}
+
+// Refund request
+export type RefundStatus = "pending" | "approved" | "rejected" | "processed";
+export type RefundReason =
+  | "damaged"
+  | "wrong_item"
+  | "not_as_described"
+  | "changed_mind"
+  | "other";
+
+export interface RefundRequest {
+  _id: string;
+  order: string | Order;
+  user: string | User;
+  reason: RefundReason;
+  description?: string;
+  items?: { product: string; qty: number; refundAmount: number }[];
+  totalRefundAmount: number;
+  status: RefundStatus;
+  adminNotes?: string;
+  processedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+// Response types for new APIs
+export interface AddressesResponse {
+  addresses: SavedAddress[];
+}
+
+export interface PaymentMethodsResponse {
+  paymentMethods: SavedPaymentMethod[];
+}
+
+export interface RefundsResponse {
+  refunds: RefundRequest[];
+}

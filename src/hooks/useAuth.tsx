@@ -8,6 +8,7 @@ import {
 import { type User, type AuthResponse, type ApiResponse } from "@/types";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
+import { useCartStore } from "@/store/cartStore";
 
 interface AuthContextType {
   user: User | null;
@@ -30,12 +31,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data } = await api.get<ApiResponse<{ user: User }>>("/auth/me");
         if (data.success && data.data) {
           setUser(data.data.user);
+          // Set cart user context
+          useCartStore.getState().setUserId(data.data.user._id);
         }
       } catch (error: any) {
         // Silent fail for 401 (Not Authorized) during initial check
         if (error.response?.status !== 401) {
           console.error("Session check failed", error);
         }
+        // Clear cart user context for guest
+        useCartStore.getState().setUserId(null);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -52,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       if (data.success && data.data) {
         setUser(data.data.user);
+        // Set cart user context
+        useCartStore.getState().setUserId(data.data.user._id);
         toast.success("Welcome back!");
         return data.data.user;
       }
@@ -70,6 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       if (data.success && data.data) {
         setUser(data.data.user);
+        // Set cart user context
+        useCartStore.getState().setUserId(data.data.user._id);
         toast.success("Account created successfully");
       }
     } catch (error: any) {
@@ -82,11 +91,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await api.post("/auth/logout");
       setUser(null);
+      // Clear cart user context
+      useCartStore.getState().setUserId(null);
       toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout error", error);
       // Force local logout anyway
       setUser(null);
+      useCartStore.getState().setUserId(null);
     }
   };
 
