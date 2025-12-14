@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, Search } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -54,13 +54,19 @@ export default function Navbar() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
           {navLinks.map((link) => (
-            <Link
+            <NavLink
               key={link.name}
               to={link.href}
-              className="px-4 py-2 text-sm font-medium text-foreground/70 transition-all hover:text-foreground hover:bg-muted/50 rounded-full"
+              className={({ isActive }) =>
+                `px-4 py-2 text-sm font-medium transition-all rounded-full ${
+                  isActive
+                    ? "text-primary bg-primary/10 font-semibold"
+                    : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                }`
+              }
             >
               {link.name}
-            </Link>
+            </NavLink>
           ))}
         </nav>
 
