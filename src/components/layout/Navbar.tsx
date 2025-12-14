@@ -36,23 +36,28 @@ export default function Navbar() {
       <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <Link to="/" className="flex items-center space-x-2">
-            <img
-              src="/KORE.png"
-              alt="KORE Logo"
-              className="h-8 w-8 object-contain"
-            />
-            <span className="font-bold text-lg tracking-tight">KORE</span>
+          <Link to="/" className="flex items-center space-x-3 group">
+            <div className="relative">
+              <div className="absolute -inset-2 bg-primary/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <img
+                src="/KORE.png"
+                alt="KORE Logo"
+                className="relative h-10 w-10 object-cover rounded-xl shadow-sm group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+            <span className="font-heading font-bold text-xl tracking-tight group-hover:text-primary transition-colors duration-300">
+              KORE
+            </span>
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.href}
-              className="text-foreground/60 transition-colors hover:text-foreground"
+              className="px-4 py-2 text-sm font-medium text-foreground/70 transition-all hover:text-foreground hover:bg-muted/50 rounded-full"
             >
               {link.name}
             </Link>
