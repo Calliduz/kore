@@ -1,8 +1,9 @@
 export interface User {
-  id: string;
+  _id: string;
+  id?: string;
   email: string;
   name: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
   createdAt?: string;
   updatedAt?: string;
 }
@@ -59,6 +60,7 @@ export interface Order {
   isDelivered: boolean;
   deliveredAt?: string;
   paymentResult?: PaymentResult;
+  status?: "processing" | "shipped" | "delivered";
   createdAt: string;
 }
 

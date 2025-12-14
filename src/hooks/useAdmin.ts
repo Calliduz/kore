@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { type ApiResponse, type Product, type ProductsResponse } from '@/types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { type ApiResponse, type Product, type ProductsResponse } from "@/types";
 
 // Create product payload
 interface CreateProductPayload {
@@ -15,9 +15,11 @@ interface CreateProductPayload {
 // Admin: Get all products
 export function useAdminProducts() {
   return useQuery({
-    queryKey: ['admin', 'products'],
+    queryKey: ["admin", "products"],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<ProductsResponse>>('/products?limit=100');
+      const { data } = await api.get<ApiResponse<ProductsResponse>>(
+        "/products?limit=100"
+      );
       return data.data?.data || [];
     },
   });
@@ -29,15 +31,18 @@ export function useCreateProduct() {
 
   return useMutation({
     mutationFn: async (payload: CreateProductPayload) => {
-      const { data } = await api.post<ApiResponse<{ product: Product }>>('/products', payload);
+      const { data } = await api.post<ApiResponse<{ product: Product }>>(
+        "/products",
+        payload
+      );
       if (!data.success) {
-        throw new Error(data.message || 'Failed to create product');
+        throw new Error(data.message || "Failed to create product");
       }
       return data.data?.product;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 }
@@ -47,16 +52,22 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...payload }: CreateProductPayload & { id: string }) => {
-      const { data } = await api.put<ApiResponse<{ product: Product }>>(`/products/${id}`, payload);
+    mutationFn: async ({
+      id,
+      ...payload
+    }: CreateProductPayload & { id: string }) => {
+      const { data } = await api.put<ApiResponse<{ product: Product }>>(
+        `/products/${id}`,
+        payload
+      );
       if (!data.success) {
-        throw new Error(data.message || 'Failed to update product');
+        throw new Error(data.message || "Failed to update product");
       }
       return data.data?.product;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 }
@@ -69,12 +80,12 @@ export function useDeleteProduct() {
     mutationFn: async (id: string) => {
       const { data } = await api.delete<ApiResponse<null>>(`/products/${id}`);
       if (!data.success) {
-        throw new Error(data.message || 'Failed to delete product');
+        throw new Error(data.message || "Failed to delete product");
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 }
@@ -82,9 +93,9 @@ export function useDeleteProduct() {
 // Admin: Get all orders
 export function useAdminOrders() {
   return useQuery({
-    queryKey: ['admin', 'orders'],
+    queryKey: ["admin", "orders"],
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<{ orders: any[] }>>('/orders');
+      const { data } = await api.get<ApiResponse<{ orders: any[] }>>("/orders");
       return data.data?.orders || [];
     },
   });
@@ -96,14 +107,44 @@ export function useDeliverOrder() {
 
   return useMutation({
     mutationFn: async (orderId: string) => {
-      const { data } = await api.put<ApiResponse<any>>(`/orders/${orderId}/deliver`);
+      const { data } = await api.put<ApiResponse<any>>(
+        `/orders/${orderId}/deliver`
+      );
       if (!data.success) {
-        throw new Error(data.message || 'Failed to update delivery status');
+        throw new Error(data.message || "Failed to update delivery status");
       }
       return data.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+    },
+  });
+}
+
+// Admin: Update order status (processing, shipped, delivered)
+export function useUpdateOrderStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      status,
+    }: {
+      orderId: string;
+      status: string;
+    }) => {
+      const { data } = await api.put<ApiResponse<any>>(
+        `/orders/${orderId}/status`,
+        { status }
+      );
+      if (!data.success) {
+        throw new Error(data.message || "Failed to update order status");
+      }
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
 }

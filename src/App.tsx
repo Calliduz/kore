@@ -2,8 +2,11 @@ import { SkeletonTheme } from "react-loading-skeleton";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/hooks/useAuth";
+
+// User Pages
 import Home from "@/pages/Home";
 import Shop from "@/pages/Shop";
 import Login from "@/pages/Login";
@@ -16,8 +19,15 @@ import Collections from "@/pages/Collections";
 import Wishlist from "@/pages/Wishlist";
 import About from "@/pages/About";
 import NotFound from "@/pages/NotFound";
-import AdminDashboard from "@/pages/AdminDashboard";
 import OrderDetails from "@/pages/OrderDetails";
+
+// Admin Pages
+import AdminOverview from "@/pages/admin/AdminOverview";
+import AdminProducts from "@/pages/admin/AdminProducts";
+import AdminOrders from "@/pages/admin/AdminOrders";
+import AdminCoupons from "@/pages/admin/AdminCoupons";
+import AdminUsers from "@/pages/admin/AdminUsers";
+
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -34,6 +44,7 @@ function App() {
               highlightColor="hsl(var(--color-background))"
             >
               <Routes>
+                {/* User Routes - with Navbar, Footer */}
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Home />} />
                   <Route path="shop" element={<Shop />} />
@@ -52,7 +63,7 @@ function App() {
                   <Route path="login" element={<Login />} />
                   <Route path="register" element={<Register />} />
 
-                  {/* Protected Routes */}
+                  {/* Protected User Routes */}
                   <Route
                     path="checkout"
                     element={
@@ -77,15 +88,16 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route
-                    path="admin"
-                    element={
-                      <ProtectedRoute>
-                        <AdminDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
                   <Route path="*" element={<NotFound />} />
+                </Route>
+
+                {/* Admin Routes - Separate Layout without Navbar/Footer */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<AdminOverview />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="coupons" element={<AdminCoupons />} />
+                  <Route path="users" element={<AdminUsers />} />
                 </Route>
               </Routes>
               <Toaster

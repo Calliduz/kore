@@ -45,7 +45,7 @@ Query Parameters:
 
 ---
 
-## ✅ Product Reviews API (NEW)
+## ✅ Product Reviews API
 
 **GET /api/products/:id/reviews** - Get all reviews for a product
 
@@ -89,45 +89,36 @@ Query Parameters:
 
 ---
 
-## ✅ Cart API
+## ✅ Users API (NEW)
 
-Cart is handled client-side using Zustand store. No backend endpoints required.
+**GET /api/users** (Admin Auth Required) - Get all users
 
----
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "_id": "...",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "user",
+        "createdAt": "2024-01-01T00:00:00Z"
+      }
+    ]
+  }
+}
+```
 
-## ✅ Wishlist API
+**GET /api/users/:id** (Admin Auth Required) - Get user by ID
 
-- **GET** `/api/wishlist` (Auth Required): Returns user's wishlist with populated products
-- **POST** `/api/wishlist/:productId` (Auth Required): Adds product to wishlist
-- **DELETE** `/api/wishlist/:productId` (Auth Required): Removes product from wishlist
+**PUT /api/users/:id/role** (Admin Auth Required) - Update user role
 
----
+- Body: `{ role: "user" | "admin" }`
 
-## ✅ Newsletter API
+**DELETE /api/users/:id** (Admin Auth Required) - Delete user
 
-- **POST** `/api/newsletter/subscribe`
-  - Body: `{ email: string }`
-  - Returns 200 on success
-  - Returns 409 if email already subscribed (frontend handles gracefully)
-
----
-
-## ✅ Auth API
-
-- **POST** `/api/auth/login` - Authenticates user, returns JWT token (via httpOnly cookie)
-- **POST** `/api/auth/register` - Creates new user account
-- **POST** `/api/auth/logout` - Clears auth cookies
-- **POST** `/api/auth/refresh` - Refreshes access token using refresh token
-- **GET** `/api/auth/me` (Auth Required): Returns current user profile
-  - Returns 401 Unauthorized if no valid token
-
----
-
-## ✅ User Profile API
-
-- **PUT** `/api/users/profile` (Auth Required): Update user profile
-  - Body: `{ name: string, password?: string }`
-  - Returns updated user object
+- Returns 403 if trying to delete self
 
 ---
 
@@ -152,7 +143,7 @@ Cart is handled client-side using Zustand store. No backend endpoints required.
   "taxPrice": 5.0,
   "shippingPrice": 10.0,
   "totalPrice": 74.99,
-  "couponCode": "SAVE20" // Optional - applied coupon code
+  "couponCode": "SAVE20"
 }
 ```
 
@@ -168,9 +159,13 @@ Cart is handled client-side using Zustand store. No backend endpoints required.
 
 **PUT /api/orders/:id/deliver** (Admin Auth Required) - Mark order as delivered
 
+**PUT /api/orders/:id/status** (Admin Auth Required) - Update order status (NEW)
+
+- Body: `{ status: "processing" | "shipped" | "delivered" }`
+
 ---
 
-## ✅ Coupons API (NEW)
+## ✅ Coupons API
 
 **GET /api/coupons** (Admin Auth Required) - Get all coupons
 
@@ -182,7 +177,7 @@ Cart is handled client-side using Zustand store. No backend endpoints required.
       {
         "_id": "...",
         "code": "SAVE20",
-        "discountType": "percentage", // or "fixed"
+        "discountType": "percentage",
         "discountValue": 20,
         "minPurchase": 50,
         "maxUses": 100,
@@ -197,61 +192,35 @@ Cart is handled client-side using Zustand store. No backend endpoints required.
 ```
 
 **POST /api/coupons** (Admin Auth Required) - Create coupon
-
-- Body:
-
-```json
-{
-  "code": "SAVE20",
-  "discountType": "percentage",
-  "discountValue": 20,
-  "minPurchase": 50,
-  "maxUses": 100,
-  "isActive": true,
-  "expiresAt": "2024-12-31"
-}
-```
-
 **PUT /api/coupons/:id** (Admin Auth Required) - Update coupon
-
 **DELETE /api/coupons/:id** (Admin Auth Required) - Delete coupon
 
 **POST /api/coupons/validate** - Validate coupon code (public)
 
 - Body: `{ code: string, cartTotal: number }`
-- Response:
+- Response: `{ valid: boolean, coupon?: {...}, discountAmount?: number, message: string }`
 
-```json
-{
-  "success": true,
-  "data": {
-    "valid": true,
-    "coupon": { ... },
-    "discountAmount": 15.00,
-    "message": "Coupon applied successfully"
-  }
-}
-```
+---
 
-- Returns `valid: false` with appropriate message if:
-  - Coupon not found
-  - Coupon expired
-  - Coupon inactive
-  - Cart total below minimum purchase
-  - Coupon already at max uses
+## ✅ Auth API
+
+- **POST /api/auth/login** - Authenticates user
+- **POST /api/auth/register** - Creates new user account
+- **POST /api/auth/logout** - Clears auth cookies
+- **POST /api/auth/refresh** - Refreshes access token
+- **GET /api/auth/me** (Auth Required): Returns current user profile
+
+---
+
+## ✅ User Profile API
+
+- **PUT /api/users/profile** (Auth Required): Update user profile
 
 ---
 
 ## ✅ Payment API
 
 **GET /api/config/stripe** - Get Stripe publishable key
-
-```json
-{
-  "success": true,
-  "data": { "publishableKey": "pk_test_..." }
-}
-```
 
 **POST /api/payment/create-payment-intent** (Auth Required)
 
@@ -260,26 +229,57 @@ Cart is handled client-side using Zustand store. No backend endpoints required.
 
 ---
 
-## Frontend Categories
+## ✅ Wishlist API
 
-The frontend Shop page uses these category filters:
-
-- Electronics
-- Accessories
-- Home
-- Office
-- Travel
-
-The Collections page links to shop with these category mappings:
-
-- Minimalist Living → `?category=Home`
-- Workspace → `?category=Office`
-- Travel & Carry → `?category=Travel`
-- Tech Accessories → `?category=Electronics`
+- **GET /api/wishlist** (Auth Required)
+- **POST /api/wishlist/:productId** (Auth Required)
+- **DELETE /api/wishlist/:productId** (Auth Required)
 
 ---
 
-## Coupon Schema (Mongoose)
+## ✅ Newsletter API
+
+- **POST /api/newsletter/subscribe** - Returns 409 if already subscribed
+
+---
+
+## Mongoose Schemas
+
+### User Schema
+
+```javascript
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+  },
+  { timestamps: true }
+);
+```
+
+### Order Schema (Updated)
+
+```javascript
+const orderSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  orderItems: [...],
+  shippingAddress: {...},
+  paymentMethod: { type: String, required: true },
+  taxPrice: { type: Number, required: true },
+  shippingPrice: { type: Number, required: true },
+  totalPrice: { type: Number, required: true },
+  isPaid: { type: Boolean, default: false },
+  paidAt: { type: Date },
+  isDelivered: { type: Boolean, default: false },
+  deliveredAt: { type: Date },
+  status: { type: String, enum: ['processing', 'shipped', 'delivered'], default: 'processing' },
+  paymentResult: {...},
+}, { timestamps: true });
+```
+
+### Coupon Schema
 
 ```javascript
 const couponSchema = new mongoose.Schema(
@@ -292,7 +292,7 @@ const couponSchema = new mongoose.Schema(
     },
     discountValue: { type: Number, required: true },
     minPurchase: { type: Number, default: 0 },
-    maxUses: { type: Number, default: 0 }, // 0 = unlimited
+    maxUses: { type: Number, default: 0 },
     usedCount: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
     expiresAt: { type: Date, default: null },
@@ -301,7 +301,7 @@ const couponSchema = new mongoose.Schema(
 );
 ```
 
-## Review Schema (Mongoose)
+### Review Schema
 
 ```javascript
 const reviewSchema = new mongoose.Schema(
@@ -318,7 +318,6 @@ const reviewSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Compound index to ensure one review per user per product
 reviewSchema.index({ user: 1, product: 1 }, { unique: true });
 ```
 
@@ -326,11 +325,8 @@ reviewSchema.index({ user: 1, product: 1 }, { unique: true });
 
 ## Summary
 
-All core e-commerce functionality is implemented. Frontend uses:
+All core e-commerce functionality implemented. Key new additions:
 
-- React Query for data fetching
-- Zustand for cart/wishlist state
-- Sonner for toast notifications
-- Framer Motion for animations
-- TailwindCSS v4 with custom Swiss-inspired theme
-- Stripe for payment processing
+- **User Management API** for admin to view/update/delete users
+- **Order Status API** for tracking order progress (processing → shipped → delivered)
+- **Updated User schema** with `_id` field for consistency
