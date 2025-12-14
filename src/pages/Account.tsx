@@ -1,22 +1,34 @@
-import { useAuth } from '@/hooks/useAuth';
-import { useMyOrders } from '@/hooks/useOrders';
-import { Button } from '@/components/ui/button';
-import { Package, User as UserIcon, LogOut, Settings, Clock, CheckCircle, Truck, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { api } from '@/lib/api';
-import { type ApiResponse, type AuthResponse } from '@/types';
-import Skeleton from 'react-loading-skeleton';
+import { useAuth } from "@/hooks/useAuth";
+import { useMyOrders } from "@/hooks/useOrders";
+import { Button } from "@/components/ui/button";
+import {
+  Package,
+  User as UserIcon,
+  LogOut,
+  Settings,
+  Clock,
+  CheckCircle,
+  Truck,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { api } from "@/lib/api";
+import { type ApiResponse, type AuthResponse } from "@/types";
+import Skeleton from "react-loading-skeleton";
 
 const profileSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  password: z.string().optional().refine((val) => !val || val.length >= 8, {
-    message: 'Password must be at least 8 characters if provided',
-  }),
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  password: z
+    .string()
+    .optional()
+    .refine((val) => !val || val.length >= 8, {
+      message: "Password must be at least 8 characters if provided",
+    }),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -34,7 +46,7 @@ export default function Account() {
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user?.name || '',
+      name: user?.name || "",
     },
   });
 
@@ -42,7 +54,7 @@ export default function Account() {
     try {
       await logout();
     } catch (error) {
-      toast.error('Failed to logout');
+      toast.error("Failed to logout");
     }
   };
 
@@ -53,25 +65,28 @@ export default function Account() {
         payload.password = data.password;
       }
 
-      const { data: response } = await api.put<ApiResponse<AuthResponse>>('/users/profile', payload);
-      
+      const { data: response } = await api.put<ApiResponse<AuthResponse>>(
+        "/users/profile",
+        payload
+      );
+
       if (response.success) {
-        toast.success('Profile updated successfully');
+        toast.success("Profile updated successfully");
         setIsEditing(false);
-        reset({ name: data.name, password: '' });
+        reset({ name: data.name, password: "" });
         // Force page refresh to update user context
         window.location.reload();
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+      toast.error(error.message || "Failed to update profile");
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -110,30 +125,38 @@ export default function Account() {
             </div>
 
             {isEditing ? (
-              <form onSubmit={handleSubmit(onProfileSubmit)} className="space-y-4">
+              <form
+                onSubmit={handleSubmit(onProfileSubmit)}
+                className="space-y-4"
+              >
                 <div>
                   <label className="block text-sm font-medium mb-1">Name</label>
                   <input
-                    {...register('name')}
+                    {...register("name")}
                     className="w-full p-2 border rounded-lg bg-background"
                   />
                   {errors.name && (
-                    <p className="text-destructive text-sm mt-1">{errors.name.message}</p>
+                    <p className="text-destructive text-sm mt-1">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    New Password <span className="text-muted-foreground">(optional)</span>
+                    New Password{" "}
+                    <span className="text-muted-foreground">(optional)</span>
                   </label>
                   <input
-                    {...register('password')}
+                    {...register("password")}
                     type="password"
                     placeholder="Leave blank to keep current"
                     className="w-full p-2 border rounded-lg bg-background"
                   />
                   {errors.password && (
-                    <p className="text-destructive text-sm mt-1">{errors.password.message}</p>
+                    <p className="text-destructive text-sm mt-1">
+                      {errors.password.message}
+                    </p>
                   )}
                 </div>
 
@@ -145,7 +168,7 @@ export default function Account() {
                         Saving...
                       </>
                     ) : (
-                      'Save Changes'
+                      "Save Changes"
                     )}
                   </Button>
                   <Button
@@ -164,7 +187,7 @@ export default function Account() {
                   <p className="text-sm text-muted-foreground">Name</p>
                   <p className="font-medium">{user?.name}</p>
                 </div>
-                
+
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Email</p>
                   <p className="font-medium">{user?.email}</p>
@@ -192,7 +215,10 @@ export default function Account() {
             {ordersLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="p-4 rounded-lg border bg-card space-y-3">
+                  <div
+                    key={i}
+                    className="p-4 rounded-lg border bg-card space-y-3"
+                  >
                     <div className="flex justify-between">
                       <div className="space-y-2">
                         <Skeleton width={120} height={20} />
@@ -210,18 +236,23 @@ export default function Account() {
             ) : orders && orders.length > 0 ? (
               <div className="space-y-4">
                 {orders.map((order) => (
-                  <div
+                  <Link
                     key={order._id}
-                    className="p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                    to={`/order/${order._id}`}
+                    className="block p-4 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-medium">Order #{order._id.slice(-8).toUpperCase()}</p>
+                        <p className="font-medium">
+                          Order #{order._id.slice(-8).toUpperCase()}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {formatDate(order.createdAt)}
                         </p>
                       </div>
-                      <p className="font-bold">${order.totalPrice.toFixed(2)}</p>
+                      <p className="font-bold">
+                        ${order.totalPrice.toFixed(2)}
+                      </p>
                     </div>
 
                     <div className="flex items-center gap-4 text-sm">
@@ -229,12 +260,16 @@ export default function Account() {
                         {order.isPaid ? (
                           <>
                             <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span className="text-green-600 dark:text-green-400">Paid</span>
+                            <span className="text-green-600 dark:text-green-400">
+                              Paid
+                            </span>
                           </>
                         ) : (
                           <>
                             <Clock className="h-4 w-4 text-yellow-500" />
-                            <span className="text-yellow-600 dark:text-yellow-400">Awaiting Payment</span>
+                            <span className="text-yellow-600 dark:text-yellow-400">
+                              Awaiting Payment
+                            </span>
                           </>
                         )}
                       </div>
@@ -242,24 +277,30 @@ export default function Account() {
                         {order.isDelivered ? (
                           <>
                             <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span className="text-green-600 dark:text-green-400">Delivered</span>
+                            <span className="text-green-600 dark:text-green-400">
+                              Delivered
+                            </span>
                           </>
                         ) : (
                           <>
                             <Truck className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">In Transit</span>
+                            <span className="text-muted-foreground">
+                              In Transit
+                            </span>
                           </>
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
               <div className="text-center py-12 text-muted-foreground space-y-2">
                 <Package className="h-12 w-12 mx-auto opacity-50" />
                 <p className="font-medium">No orders yet</p>
-                <p className="text-sm">When you make a purchase, it will appear here.</p>
+                <p className="text-sm">
+                  When you make a purchase, it will appear here.
+                </p>
                 <Button asChild className="mt-4">
                   <Link to="/">Start Shopping</Link>
                 </Button>

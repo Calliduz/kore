@@ -1,37 +1,49 @@
-import { useState } from 'react';
-import { useCartStore } from '@/store/cartStore';
-import { Button } from '@/components/ui/button';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { Loader2, ShoppingBag, Truck, CreditCard, ChevronRight, Check } from 'lucide-react';
-import { useCreateOrder } from '@/hooks/useOrders';
-import { useAuth } from '@/hooks/useAuth';
-import StripeProvider from '@/components/features/StripeProvider';
-import PaymentForm from '@/components/features/PaymentForm';
+import { useState } from "react";
+import { useCartStore } from "@/store/cartStore";
+import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  Loader2,
+  ShoppingBag,
+  Truck,
+  CreditCard,
+  ChevronRight,
+  Check,
+} from "lucide-react";
+import { useCreateOrder } from "@/hooks/useOrders";
+import { useAuth } from "@/hooks/useAuth";
+import StripeProvider from "@/components/features/StripeProvider";
+import PaymentForm from "@/components/features/PaymentForm";
+import CouponInput from "@/components/features/CouponInput";
+import { type Coupon } from "@/hooks/useCoupons";
 
 const shippingSchema = z.object({
-  address: z.string().min(5, 'Address must be at least 5 characters'),
-  city: z.string().min(2, 'City is required'),
-  postalCode: z.string().min(4, 'Postal code is required'),
-  country: z.string().min(2, 'Country is required'),
+  address: z.string().min(5, "Address must be at least 5 characters"),
+  city: z.string().min(2, "City is required"),
+  postalCode: z.string().min(4, "Postal code is required"),
+  country: z.string().min(2, "Country is required"),
 });
 
 type ShippingFormData = z.infer<typeof shippingSchema>;
 
-type CheckoutStep = 'shipping' | 'payment' | 'confirmation';
+type CheckoutStep = "shipping" | "payment" | "confirmation";
 
 export default function Checkout() {
   const { items, total, clearCart, getOrderItems } = useCartStore();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState<CheckoutStep>('shipping');
+  const [step, setStep] = useState<CheckoutStep>("shipping");
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [shippingAddress, setShippingAddress] = useState<ShippingFormData | null>(null);
-  
+  const [shippingAddress, setShippingAddress] =
+    useState<ShippingFormData | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+
   const createOrder = useCreateOrder();
 
   const {
@@ -44,18 +56,27 @@ export default function Checkout() {
 
   // Redirect if cart is empty and not in confirmation step
   useEffect(() => {
-    if (items.length === 0 && step !== 'confirmation') {
-      navigate('/cart');
-      toast.error('Your cart is empty');
+    if (items.length === 0 && step !== "confirmation") {
+      navigate("/cart");
+      toast.error("Your cart is empty");
     }
   }, [items, navigate, step]);
+
+  // Handle coupon application
+  const handleCouponApply = (coupon: Coupon | null, discount: number) => {
+    setAppliedCoupon(coupon);
+    setDiscountAmount(discount);
+  };
 
   // Calculate prices
   const TAX_RATE = 0.08; // 8% tax
   const SHIPPING_COST = total > 100 ? 0 : 10; // Free shipping over $100
-  const taxPrice = Number((total * TAX_RATE).toFixed(2));
+  const subtotalAfterDiscount = Math.max(0, total - discountAmount);
+  const taxPrice = Number((subtotalAfterDiscount * TAX_RATE).toFixed(2));
   const shippingPrice = SHIPPING_COST;
-  const totalPrice = Number((total + taxPrice + shippingPrice).toFixed(2));
+  const totalPrice = Number(
+    (subtotalAfterDiscount + taxPrice + shippingPrice).toFixed(2)
+  );
 
   const onShippingSubmit = async (data: ShippingFormData) => {
     try {
@@ -63,7 +84,7 @@ export default function Checkout() {
       const order = await createOrder.mutateAsync({
         orderItems: getOrderItems(),
         shippingAddress: data,
-        paymentMethod: 'stripe',
+        paymentMethod: "stripe",
         taxPrice,
         shippingPrice,
         totalPrice,
@@ -72,19 +93,19 @@ export default function Checkout() {
       if (order?._id) {
         setOrderId(order._id);
         setShippingAddress(data);
-        setStep('payment');
+        setStep("payment");
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create order');
+      toast.error(error.message || "Failed to create order");
     }
   };
 
   const handlePaymentSuccess = () => {
     clearCart();
-    setStep('confirmation');
+    setStep("confirmation");
   };
 
-  if (items.length === 0 && step !== 'confirmation') return null;
+  if (items.length === 0 && step !== "confirmation") return null;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -93,21 +114,21 @@ export default function Checkout() {
         <StepIndicator
           step={1}
           label="Shipping"
-          isActive={step === 'shipping'}
-          isComplete={step === 'payment' || step === 'confirmation'}
+          isActive={step === "shipping"}
+          isComplete={step === "payment" || step === "confirmation"}
         />
         <div className="w-16 h-0.5 bg-muted mx-2" />
         <StepIndicator
           step={2}
           label="Payment"
-          isActive={step === 'payment'}
-          isComplete={step === 'confirmation'}
+          isActive={step === "payment"}
+          isComplete={step === "confirmation"}
         />
         <div className="w-16 h-0.5 bg-muted mx-2" />
         <StepIndicator
           step={3}
           label="Confirm"
-          isActive={step === 'confirmation'}
+          isActive={step === "confirmation"}
           isComplete={false}
         />
       </div>
@@ -115,7 +136,7 @@ export default function Checkout() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2">
-          {step === 'shipping' && (
+          {step === "shipping" && (
             <div className="p-6 rounded-lg border bg-card">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -124,53 +145,72 @@ export default function Checkout() {
                 <h2 className="text-xl font-semibold">Shipping Address</h2>
               </div>
 
-              <form onSubmit={handleSubmit(onShippingSubmit)} className="space-y-4">
+              <form
+                onSubmit={handleSubmit(onShippingSubmit)}
+                className="space-y-4"
+              >
                 <div>
-                  <label className="block text-sm font-medium mb-1">Address</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Address
+                  </label>
                   <input
-                    {...register('address')}
+                    {...register("address")}
                     placeholder="123 Main Street"
                     className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                   {errors.address && (
-                    <p className="text-destructive text-sm mt-1">{errors.address.message}</p>
+                    <p className="text-destructive text-sm mt-1">
+                      {errors.address.message}
+                    </p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">City</label>
+                    <label className="block text-sm font-medium mb-1">
+                      City
+                    </label>
                     <input
-                      {...register('city')}
+                      {...register("city")}
                       placeholder="New York"
                       className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                     {errors.city && (
-                      <p className="text-destructive text-sm mt-1">{errors.city.message}</p>
+                      <p className="text-destructive text-sm mt-1">
+                        {errors.city.message}
+                      </p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Postal Code</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Postal Code
+                    </label>
                     <input
-                      {...register('postalCode')}
+                      {...register("postalCode")}
                       placeholder="10001"
                       className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
                     />
                     {errors.postalCode && (
-                      <p className="text-destructive text-sm mt-1">{errors.postalCode.message}</p>
+                      <p className="text-destructive text-sm mt-1">
+                        {errors.postalCode.message}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Country</label>
+                  <label className="block text-sm font-medium mb-1">
+                    Country
+                  </label>
                   <input
-                    {...register('country')}
+                    {...register("country")}
                     placeholder="USA"
                     className="w-full p-3 border rounded-lg bg-background focus:ring-2 focus:ring-primary focus:border-transparent"
                   />
                   {errors.country && (
-                    <p className="text-destructive text-sm mt-1">{errors.country.message}</p>
+                    <p className="text-destructive text-sm mt-1">
+                      {errors.country.message}
+                    </p>
                   )}
                 </div>
 
@@ -196,7 +236,7 @@ export default function Checkout() {
             </div>
           )}
 
-          {step === 'payment' && orderId && (
+          {step === "payment" && orderId && (
             <div className="p-6 rounded-lg border bg-card">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -207,7 +247,9 @@ export default function Checkout() {
 
               {shippingAddress && (
                 <div className="mb-6 p-4 rounded-lg bg-muted/50">
-                  <p className="text-sm text-muted-foreground mb-1">Shipping to:</p>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Shipping to:
+                  </p>
                   <p className="font-medium">
                     {shippingAddress.address}, {shippingAddress.city}
                   </p>
@@ -221,37 +263,36 @@ export default function Checkout() {
                 <PaymentForm
                   orderId={orderId}
                   totalPrice={totalPrice}
-                  userEmail={user?.email || ''}
+                  userEmail={user?.email || ""}
                   onSuccess={handlePaymentSuccess}
                 />
               </StripeProvider>
             </div>
           )}
 
-          {step === 'confirmation' && (
+          {step === "confirmation" && (
             <div className="p-6 rounded-lg border bg-card text-center">
               <div className="mx-auto h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6">
                 <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
-              
+
               <h2 className="text-2xl font-bold mb-2">Order Confirmed!</h2>
               <p className="text-muted-foreground mb-6">
-                Thank you for your purchase. Your order has been placed successfully.
+                Thank you for your purchase. Your order has been placed
+                successfully.
               </p>
-              
+
               {orderId && (
                 <p className="text-sm text-muted-foreground mb-6">
                   Order ID: <span className="font-mono">{orderId}</span>
                 </p>
               )}
-              
+
               <div className="flex gap-4 justify-center">
-                <Button variant="outline" onClick={() => navigate('/account')}>
+                <Button variant="outline" onClick={() => navigate("/account")}>
                   View Orders
                 </Button>
-                <Button onClick={() => navigate('/')}>
-                  Continue Shopping
-                </Button>
+                <Button onClick={() => navigate("/")}>Continue Shopping</Button>
               </div>
             </div>
           )}
@@ -269,17 +310,22 @@ export default function Checkout() {
 
             <div className="space-y-4">
               {items.map((item, index) => (
-                <div key={item._id || item.id || `checkout-item-${index}`} className="flex gap-3">
+                <div
+                  key={item._id || item.id || `checkout-item-${index}`}
+                  className="flex gap-3"
+                >
                   <div className="h-16 w-16 rounded-md bg-muted overflow-hidden flex-shrink-0">
                     <img
-                      src={item.images?.[0] || item.image || '/placeholder.jpg'}
+                      src={item.images?.[0] || item.image || "/placeholder.jpg"}
                       alt={item.name}
                       className="h-full w-full object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Qty: {item.quantity}
+                    </p>
                     <p className="text-sm font-medium">
                       ${(item.price * item.quantity).toFixed(2)}
                     </p>
@@ -288,18 +334,39 @@ export default function Checkout() {
               ))}
             </div>
 
+            {/* Coupon Input - Only show during shipping step */}
+            {step === "shipping" && (
+              <div className="border-t mt-6 pt-4">
+                <CouponInput
+                  cartTotal={total}
+                  onApply={handleCouponApply}
+                  appliedCoupon={appliedCoupon}
+                />
+              </div>
+            )}
+
             <div className="border-t mt-6 pt-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span>${total.toFixed(2)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                  <span>Discount ({appliedCoupon?.code})</span>
+                  <span>-${discountAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Tax (8%)</span>
                 <span>${taxPrice.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Shipping</span>
-                <span>{shippingPrice === 0 ? 'FREE' : `$${shippingPrice.toFixed(2)}`}</span>
+                <span>
+                  {shippingPrice === 0
+                    ? "FREE"
+                    : `$${shippingPrice.toFixed(2)}`}
+                </span>
               </div>
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>Total</span>
@@ -307,7 +374,7 @@ export default function Checkout() {
               </div>
             </div>
 
-            {total < 100 && step === 'shipping' && (
+            {total < 100 && step === "shipping" && (
               <div className="mt-4 p-3 rounded-lg bg-primary/10 text-sm">
                 <p className="text-primary">
                   Add ${(100 - total).toFixed(2)} more for free shipping!
@@ -338,16 +405,16 @@ function StepIndicator({
       <div
         className={`
           h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors
-          ${isComplete ? 'bg-primary text-primary-foreground' : ''}
-          ${isActive ? 'bg-primary text-primary-foreground' : ''}
-          ${!isActive && !isComplete ? 'bg-muted text-muted-foreground' : ''}
+          ${isComplete ? "bg-primary text-primary-foreground" : ""}
+          ${isActive ? "bg-primary text-primary-foreground" : ""}
+          ${!isActive && !isComplete ? "bg-muted text-muted-foreground" : ""}
         `}
       >
         {isComplete ? <Check className="h-4 w-4" /> : step}
       </div>
       <span
         className={`text-sm font-medium hidden sm:block ${
-          isActive || isComplete ? 'text-foreground' : 'text-muted-foreground'
+          isActive || isComplete ? "text-foreground" : "text-muted-foreground"
         }`}
       >
         {label}
