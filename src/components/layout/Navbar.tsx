@@ -37,7 +37,11 @@ export default function Navbar() {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="h-6 w-6 bg-primary rounded-sm" />
+            <img
+              src="/KORE.png"
+              alt="KORE Logo"
+              className="h-8 w-8 object-contain"
+            />
             <span className="font-bold text-lg tracking-tight">KORE</span>
           </Link>
         </div>
